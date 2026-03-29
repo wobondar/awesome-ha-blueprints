@@ -15,8 +15,8 @@
     }
   ],
   "description": "Controller automation for executing any kind of action triggered by the provided IKEA E1812 TR\u00c5DFRI Shortcut button.",
-  "versions": ["2025.04.12"],
-  "latest_version": "2025.04.12",
+  "versions": ["2025.04.12", "2026.03.29"],
+  "latest_version": "2026.03.29",
   "status": "active",
   "supported_hooks": ["cover", "light", "media_player"],
   "supported_integrations": ["ZHA", "Zigbee2MQTT", "deCONZ"]

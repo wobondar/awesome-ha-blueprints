@@ -4,7 +4,7 @@
 
 ## Summary
 
-- **Controllers:** 33 blueprints, 41 versions
+- **Controllers:** 33 blueprints, 42 versions
 - **Automations:** 4 blueprints, 4 versions
 - **Hooks:** 3 blueprints, 18 versions
 - **Breaking versions:** 12
@@ -183,7 +183,7 @@
 - **Title:** Controller - IKEA E1812 TRÅDFRI Shortcut button
 - **Librarians:** yarafie, EPMatt
 - **Library Maintainers:** EPMatt, yarafie
-- **Latest Version:** 2025.04.12 (**🚨 Breaking Change**)
+- **Latest Version:** 2026.03.29
 - **Tags:** zigbee, button, shortcut
 <details>
 <summary>Versions</summary>
@@ -195,6 +195,8 @@
 **Breaking change reasons:**
 
 - Add native double press triggers and refactor the blueprint to use triggers and trigger IDs. The integration selector input is removed, and `helper_last_controller_event` is no longer required. Re-download the blueprint and reconfigure existing automations to apply the changes. (Thanks [@yarafie](https://github.com/yarafie))
+
+| EPMatt | awesome | 2026.03.29 | no |
 
 </details>
 
