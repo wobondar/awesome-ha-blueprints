@@ -1,10 +1,10 @@
 # Awesome HA Blueprints – Library Report
 
-## _Generated on 2026-03-29_
+## _Generated on 2026-04-08_
 
 ## Summary
 
-- **Controllers:** 33 blueprints, 42 versions
+- **Controllers:** 33 blueprints, 43 versions
 - **Automations:** 4 blueprints, 4 versions
 - **Hooks:** 3 blueprints, 18 versions
 - **Breaking versions:** 12
@@ -367,7 +367,7 @@
 - **Title:** Controller - Philips 324131092621 Hue Dimmer switch
 - **Librarians:** yarafie, EPMatt
 - **Library Maintainers:** EPMatt, yarafie
-- **Latest Version:** 2025.10.16
+- **Latest Version:** 2026.04.08
 - **Tags:** zigbee, dimmer, light
 <details>
 <summary>Versions</summary>
@@ -375,6 +375,7 @@
 | Library | Release | Version    | Breaking |
 | ------- | ------- | ---------- | -------- |
 | EPMatt  | awesome | 2025.10.16 | no       |
+| EPMatt  | awesome | 2026.04.08 | no       |
 
 </details>
 

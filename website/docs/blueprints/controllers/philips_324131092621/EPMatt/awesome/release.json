@@ -15,8 +15,8 @@
     }
   ],
   "description": "Controller automation for executing any kind of action triggered by the provided Philips 324131092621 Hue Dimmer switch.",
-  "versions": ["2025.10.16"],
-  "latest_version": "2025.10.16",
+  "versions": ["2025.10.16", "2026.04.08"],
+  "latest_version": "2026.04.08",
   "status": "active",
   "supported_hooks": ["light", "media_player"],
   "supported_integrations": ["ZHA", "Zigbee2MQTT", "deCONZ"]
