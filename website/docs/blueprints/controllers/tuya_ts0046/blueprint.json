@@ -1,0 +1,25 @@
+{
+  "name": "Controller - Tuya TS0046 Wireless switch with 6 buttons",
+  "external_references": [
+    {
+      "label": "Zigbee2MQTT",
+      "url": "https://www.zigbee2mqtt.io/devices/TS0046.html"
+    }
+  ],
+  "manual_files": [],
+  "category": "controllers",
+  "blueprint_id": "tuya_ts0046",
+  "model_name": "Tuya TS0046 Wireless switch with 6 buttons",
+  "description": "Controller automation for executing any kind of action triggered by the provided Tuya TS0046 Wireless switch with 6 buttons.",
+  "librarians": [
+    {
+      "id": "wobondar",
+      "name": "wobondar"
+    }
+  ],
+  "model": "TS0046",
+  "tags": ["zigbee", "button", "remote", "6-button"],
+  "images": [],
+  "status": "active",
+  "manufacturer": "Tuya"
+}

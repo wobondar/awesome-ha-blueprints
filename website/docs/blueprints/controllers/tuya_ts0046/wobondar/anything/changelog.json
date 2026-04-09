@@ -1,0 +1,12 @@
+[
+  {
+    "date": "2026.04.09",
+    "changes": [
+      {
+        "author": "@wobondar",
+        "description": "First blueprint version, based on the Moes XH-SY-04Z blueprint by [@wobondar](https://github.com/wobondar). ([@wobondar](https://github.com/wobondar))",
+        "breaking": false
+      }
+    ]
+  }
+]
