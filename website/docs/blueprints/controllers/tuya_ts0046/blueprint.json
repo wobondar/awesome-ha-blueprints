@@ -4,6 +4,10 @@
     {
       "label": "Zigbee2MQTT",
       "url": "https://www.zigbee2mqtt.io/devices/TS0046.html"
+    },
+    {
+      "label": "LoraTap",
+      "url": "https://www.loratap.com/products/ss9600zb"
     }
   ],
   "manual_files": [],
@@ -13,13 +17,17 @@
   "description": "Controller automation for executing any kind of action triggered by the provided Tuya TS0046 Wireless switch with 6 buttons.",
   "librarians": [
     {
+      "id": "yarafie",
+      "name": "yarafie"
+    },
+    {
       "id": "wobondar",
       "name": "wobondar"
     }
   ],
   "model": "TS0046",
   "tags": ["zigbee", "button", "remote", "6-button"],
-  "images": [],
+  "images": ["tuya_ts0046.png"],
   "status": "active",
   "manufacturer": "Tuya"
 }
