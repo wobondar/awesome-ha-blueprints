@@ -5,8 +5,9 @@
   "scripts": {
     "lint": "eslint .",
     "docusaurus": "docusaurus",
-    "start": "docusaurus start",
-    "build": "docusaurus build",
+    "generate": "node scripts/generate.mjs",
+    "start": "node scripts/generate.mjs && docusaurus start",
+    "build": "node scripts/generate.mjs && docusaurus build",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",

@@ -334,6 +334,51 @@ function validateVersionJson(identity, file) {
   }
 }
 
+function validateManifestYaml(identity, file) {
+  const manifest = readYaml(file)
+
+  // Controllers must have manufacturer, model, model_name
+  if (identity.category === 'controllers') {
+    if (!manifest.manufacturer) {
+      record(
+        `manifest.yaml missing manufacturer (required for controllers):
+  file: ${file}`,
+      )
+    }
+    if (!manifest.model) {
+      record(
+        `manifest.yaml missing model (required for controllers):
+  file: ${file}`,
+      )
+    }
+    if (!manifest.model_name) {
+      record(
+        `manifest.yaml missing model_name (required for controllers):
+  file: ${file}`,
+      )
+    }
+    if (
+      !manifest.supported_integrations ||
+      manifest.supported_integrations.length === 0
+    ) {
+      record(
+        `manifest.yaml missing supported_integrations (required for controllers):
+  file: ${file}`,
+      )
+    }
+  }
+
+  // Hooks must have supported_controllers
+  if (identity.category === 'hooks') {
+    if (!manifest.supported_controllers) {
+      record(
+        `manifest.yaml missing supported_controllers (required for hooks):
+  file: ${file}`,
+      )
+    }
+  }
+}
+
 function validateBlueprintYaml(identity, file) {
   const expected = `${identity.blueprintId}.yaml`
 
@@ -366,6 +411,11 @@ for (const file of changedFiles) {
   if (!identity) continue
 
   validateLatestVersion(identity, file)
+
+  if (identity.level === 'blueprint' && file.endsWith('manifest.yaml')) {
+    validateManifestYaml(identity, file)
+    continue
+  }
 
   if (identity.level === 'blueprint' && file.endsWith('blueprint.json')) {
     validateBlueprintJson(identity, file)

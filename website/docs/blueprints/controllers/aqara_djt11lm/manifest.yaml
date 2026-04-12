@@ -1,0 +1,28 @@
+name: 'Controller - Aqara DJT11LM Vibration Sensor'
+description: 'Controller automation for executing any kind of action triggered by the provided Aqara DJT11LM Vibration Sensor.'
+manufacturer: 'Aqara'
+model: 'DJT11LM'
+model_name: 'Aqara DJT11LM Vibration Sensor'
+librarians:
+  - id: 'yarafie'
+    name: 'yarafie'
+  - id: 'EPMatt'
+    name: 'EPMatt'
+maintainers:
+  - id: 'yarafie'
+    name: 'yarafie'
+  - id: 'EPMatt'
+    name: 'EPMatt'
+supported_integrations:
+  - 'Zigbee2MQTT'
+supported_hooks:
+  - 'none'
+tags:
+  - 'zigbee'
+  - 'sensor'
+  - 'vibration'
+external_references:
+  - label: 'Blakadder'
+    url: 'https://zigbee.blakadder.com/Aqara_DJT11LM.html'
+  - label: 'Zigbee2MQTT'
+    url: 'https://www.zigbee2mqtt.io/devices/DJT11LM.html'
