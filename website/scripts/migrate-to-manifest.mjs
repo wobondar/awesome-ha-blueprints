@@ -15,10 +15,7 @@ import path from 'node:path'
 import { globSync } from 'glob'
 import YAML from 'yaml'
 
-const BLUEPRINTS_DIR = path.resolve(
-  import.meta.dirname,
-  '../docs/blueprints'
-)
+const BLUEPRINTS_DIR = path.resolve(import.meta.dirname, '../docs/blueprints')
 
 const DRY_RUN = process.argv.includes('--dry-run')
 
@@ -43,13 +40,11 @@ function isVersionDir(name) {
 // ── Extract manifest from existing files ────────────────────────────────────
 
 function extractManifest(blueprintDir, category, blueprintId) {
-  const blueprintJson = readJson(
-    path.join(blueprintDir, 'blueprint.json')
-  )
+  const blueprintJson = readJson(path.join(blueprintDir, 'blueprint.json'))
 
   // Find the first library to get maintainer and integration info
   const libraryIds = subdirs(blueprintDir).filter(
-    (d) => !d.startsWith('.') && d !== 'node_modules'
+    (d) => !d.startsWith('.') && d !== 'node_modules',
   )
 
   let maintainers = []
@@ -59,11 +54,7 @@ function extractManifest(blueprintDir, category, blueprintId) {
 
   if (libraryIds.length > 0) {
     const firstLibId = libraryIds[0]
-    const libraryJsonPath = path.join(
-      blueprintDir,
-      firstLibId,
-      'library.json'
-    )
+    const libraryJsonPath = path.join(blueprintDir, firstLibId, 'library.json')
     if (fs.existsSync(libraryJsonPath)) {
       const libraryJson = readJson(libraryJsonPath)
       maintainers = libraryJson.maintainers || []
@@ -77,7 +68,7 @@ function extractManifest(blueprintDir, category, blueprintId) {
         blueprintDir,
         firstLibId,
         releaseIds[0],
-        'release.json'
+        'release.json',
       )
       if (fs.existsSync(releaseJsonPath)) {
         const releaseJson = readJson(releaseJsonPath)
@@ -148,11 +139,7 @@ function extractDocsMdx(blueprintDir, libraryId, releaseId) {
 
   // Use the latest version's MDX as the template (they're all identical)
   const latestVersion = versions.sort().reverse()[0]
-  const mdxPath = path.join(
-    releaseDir,
-    latestVersion,
-    `${latestVersion}.mdx`
-  )
+  const mdxPath = path.join(releaseDir, latestVersion, `${latestVersion}.mdx`)
   if (!fs.existsSync(mdxPath)) return null
 
   const content = fs.readFileSync(mdxPath, 'utf-8')
@@ -191,7 +178,7 @@ function migrateBlueprint(blueprintDir, category, blueprintId) {
 
   // 3. Extract and write docs.mdx for each library/release
   const libraryIds = subdirs(blueprintDir).filter(
-    (d) => !d.startsWith('.') && d !== 'node_modules'
+    (d) => !d.startsWith('.') && d !== 'node_modules',
   )
 
   for (const libraryId of libraryIds) {
@@ -205,14 +192,10 @@ function migrateBlueprint(blueprintDir, category, blueprintId) {
       const docsPath = path.join(libraryDir, releaseId, 'docs.mdx')
 
       if (DRY_RUN) {
-        console.log(
-          `    Would write: ${libraryId}/${releaseId}/docs.mdx`
-        )
+        console.log(`    Would write: ${libraryId}/${releaseId}/docs.mdx`)
       } else {
         fs.writeFileSync(docsPath, body)
-        console.log(
-          `    Wrote: ${libraryId}/${releaseId}/docs.mdx`
-        )
+        console.log(`    Wrote: ${libraryId}/${releaseId}/docs.mdx`)
       }
     }
   }
@@ -238,13 +221,17 @@ function main() {
 
       // Skip if manifest.yaml already exists
       if (fs.existsSync(path.join(blueprintDir, 'manifest.yaml'))) {
-        console.log(`  ${category}/${blueprintId} — skipping (manifest.yaml already exists)`)
+        console.log(
+          `  ${category}/${blueprintId} — skipping (manifest.yaml already exists)`,
+        )
         continue
       }
 
       // Skip if no blueprint.json exists
       if (!fs.existsSync(path.join(blueprintDir, 'blueprint.json'))) {
-        console.log(`  ${category}/${blueprintId} — skipping (no blueprint.json)`)
+        console.log(
+          `  ${category}/${blueprintId} — skipping (no blueprint.json)`,
+        )
         continue
       }
 
@@ -254,7 +241,7 @@ function main() {
   }
 
   console.log(
-    `\nDone! Migrated ${count} blueprint(s).${DRY_RUN ? ' (dry run)' : ''}`
+    `\nDone! Migrated ${count} blueprint(s).${DRY_RUN ? ' (dry run)' : ''}`,
   )
 }
 

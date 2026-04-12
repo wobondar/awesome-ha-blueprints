@@ -15,10 +15,7 @@ import path from 'node:path'
 import { globSync } from 'glob'
 import YAML from 'yaml'
 
-const BLUEPRINTS_DIR = path.resolve(
-  import.meta.dirname,
-  '../docs/blueprints'
-)
+const BLUEPRINTS_DIR = path.resolve(import.meta.dirname, '../docs/blueprints')
 
 // ── Requirement ID mapping ──────────────────────────────────────────────────
 
@@ -86,12 +83,8 @@ function sortVersionsDesc(versions) {
 // ── File generators ─────────────────────────────────────────────────────────
 
 function generateBlueprintJson(manifest, category, blueprintId, blueprintDir) {
-  const hasImage = fs.existsSync(
-    path.join(blueprintDir, `${blueprintId}.png`)
-  )
-  const hasPdf = fs.existsSync(
-    path.join(blueprintDir, `${blueprintId}.pdf`)
-  )
+  const hasImage = fs.existsSync(path.join(blueprintDir, `${blueprintId}.png`))
+  const hasPdf = fs.existsSync(path.join(blueprintDir, `${blueprintId}.pdf`))
 
   const result = {
     name: manifest.name,
@@ -156,7 +149,7 @@ function generateLibraryJson(
   category,
   blueprintId,
   libraryId,
-  releaseIds
+  releaseIds,
 ) {
   const singular =
     category === 'controllers'
@@ -197,7 +190,7 @@ function generateReleaseJson(
   blueprintId,
   libraryId,
   releaseId,
-  versions
+  versions,
 ) {
   const sortedVersions = sortVersionsDesc(versions)
   const latestVersion = sortedVersions[0]
@@ -233,7 +226,7 @@ function generateVersionJson(
   blueprintId,
   libraryId,
   releaseId,
-  version
+  version,
 ) {
   return {
     version,
@@ -261,9 +254,7 @@ function generateVersionMdxFrontmatter(manifest, category) {
     lines.push(`manufacturer: ${manifest.manufacturer}`)
     lines.push(`model: ${manifest.model}`)
     lines.push(`model_name: ${manifest.model_name}`)
-    lines.push(
-      `integrations: [${manifest.supported_integrations.join(', ')}]`
-    )
+    lines.push(`integrations: [${manifest.supported_integrations.join(', ')}]`)
   }
 
   return `---\n${lines.join('\n')}\n---`
@@ -275,7 +266,7 @@ function generateDefaultVersionMdxBody(
   blueprintId,
   libraryId,
   releaseId,
-  hooksData
+  hooksData,
 ) {
   if (category === 'controllers') {
     return generateControllerVersionMdx(
@@ -283,7 +274,7 @@ function generateDefaultVersionMdxBody(
       blueprintId,
       libraryId,
       releaseId,
-      hooksData
+      hooksData,
     )
   }
   if (category === 'hooks') {
@@ -293,7 +284,7 @@ function generateDefaultVersionMdxBody(
     manifest,
     blueprintId,
     libraryId,
-    releaseId
+    releaseId,
   )
 }
 
@@ -302,7 +293,7 @@ function generateControllerVersionMdx(
   id,
   library,
   release,
-  hooksData
+  hooksData,
 ) {
   const hasHooks =
     manifest.supported_hooks &&
@@ -531,7 +522,7 @@ function processBlueprint(manifestPath) {
     manifest,
     category,
     blueprintId,
-    blueprintDir
+    blueprintDir,
   )
   writeJson(path.join(blueprintDir, 'blueprint.json'), blueprintJson)
 
@@ -550,7 +541,7 @@ function processBlueprint(manifestPath) {
       category,
       blueprintId,
       libraryId,
-      releaseIds
+      releaseIds,
     )
     writeJson(path.join(libraryDir, 'library.json'), libraryJson)
 
@@ -575,7 +566,7 @@ function processBlueprint(manifestPath) {
         blueprintId,
         libraryId,
         releaseId,
-        versions
+        versions,
       )
       writeJson(path.join(releaseDir, 'release.json'), releaseJson)
 
@@ -599,7 +590,7 @@ function processBlueprint(manifestPath) {
           blueprintId,
           libraryId,
           releaseId,
-          hooksData
+          hooksData,
         )
       }
 
@@ -613,7 +604,7 @@ function processBlueprint(manifestPath) {
           blueprintId,
           libraryId,
           releaseId,
-          version
+          version,
         )
         writeJson(path.join(versionDir, 'version.json'), versionJson)
 
