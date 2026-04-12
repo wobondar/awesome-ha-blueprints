@@ -80,6 +80,23 @@ function sortVersionsDesc(versions) {
   return [...versions].sort((a, b) => b.localeCompare(a))
 }
 
+/** Get release-specific config, falling back to manifest-level defaults. */
+function getReleaseConfig(manifest, releaseId) {
+  const releaseOverride = manifest.releases?.[releaseId] || {}
+  return {
+    supported_hooks:
+      releaseOverride.supported_hooks || manifest.supported_hooks || [],
+    supported_integrations:
+      releaseOverride.supported_integrations ||
+      manifest.supported_integrations ||
+      [],
+    supported_controllers:
+      releaseOverride.supported_controllers ||
+      manifest.supported_controllers ||
+      null,
+  }
+}
+
 // ── File generators ─────────────────────────────────────────────────────────
 
 function generateBlueprintJson(manifest, category, blueprintId, blueprintDir) {
@@ -191,6 +208,7 @@ function generateReleaseJson(
   libraryId,
   releaseId,
   versions,
+  releaseConfig,
 ) {
   const sortedVersions = sortVersionsDesc(versions)
   const latestVersion = sortedVersions[0]
@@ -208,13 +226,13 @@ function generateReleaseJson(
     status: manifest.status || 'active',
   }
 
-  if (category === 'controllers' && manifest.supported_hooks) {
-    result.supported_hooks = manifest.supported_hooks
-    result.supported_integrations = manifest.supported_integrations
+  if (category === 'controllers' && releaseConfig.supported_hooks) {
+    result.supported_hooks = releaseConfig.supported_hooks
+    result.supported_integrations = releaseConfig.supported_integrations
   }
 
-  if (category === 'hooks' && manifest.supported_controllers) {
-    result.supported_controllers = manifest.supported_controllers
+  if (category === 'hooks' && releaseConfig.supported_controllers) {
+    result.supported_controllers = releaseConfig.supported_controllers
   }
 
   return result
@@ -267,6 +285,7 @@ function generateDefaultVersionMdxBody(
   libraryId,
   releaseId,
   hooksData,
+  releaseConfig,
 ) {
   if (category === 'controllers') {
     return generateControllerVersionMdx(
@@ -275,6 +294,7 @@ function generateDefaultVersionMdxBody(
       libraryId,
       releaseId,
       hooksData,
+      releaseConfig,
     )
   }
   if (category === 'hooks') {
@@ -294,11 +314,10 @@ function generateControllerVersionMdx(
   library,
   release,
   hooksData,
+  releaseConfig,
 ) {
-  const hasHooks =
-    manifest.supported_hooks &&
-    manifest.supported_hooks.length > 0 &&
-    manifest.supported_hooks[0] !== 'none'
+  const hooks = releaseConfig.supported_hooks
+  const hasHooks = hooks && hooks.length > 0 && hooks[0] !== 'none'
 
   const integrationsCsv = manifest.supported_integrations.join(', ')
 
@@ -559,6 +578,9 @@ function processBlueprint(manifestPath) {
         hooksData = readJson(hooksPath)
       }
 
+      // Resolve per-release config (with fallback to manifest defaults)
+      const releaseConfig = getReleaseConfig(manifest, releaseId)
+
       // Generate release.json
       const releaseJson = generateReleaseJson(
         manifest,
@@ -567,6 +589,7 @@ function processBlueprint(manifestPath) {
         libraryId,
         releaseId,
         versions,
+        releaseConfig,
       )
       writeJson(path.join(releaseDir, 'release.json'), releaseJson)
 
@@ -591,6 +614,7 @@ function processBlueprint(manifestPath) {
           libraryId,
           releaseId,
           hooksData,
+          releaseConfig,
         )
       }
 
