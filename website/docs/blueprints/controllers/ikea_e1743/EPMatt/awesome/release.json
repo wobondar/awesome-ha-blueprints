@@ -10,13 +10,13 @@
       "name": "yarafie"
     },
     {
-      "id": "EPMatt",
-      "name": "EPMatt"
+      "id": "@Calychas",
+      "name": "Kacper Leśniara"
     }
   ],
   "description": "Controller automation for executing any kind of action triggered by the provided IKEA E1743 TR\u00c5DFRI On/Off Switch & Dimmer.",
-  "versions": ["2025.10.12"],
-  "latest_version": "2025.10.12",
+  "versions": ["2025.10.12", "2026.04.12"],
+  "latest_version": "2026.04.12",
   "status": "active",
   "supported_hooks": ["cover", "light", "media_player"],
   "supported_integrations": ["ZHA", "Zigbee2MQTT", "deCONZ"]

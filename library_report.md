@@ -4,7 +4,7 @@
 
 ## Summary
 
-- **Controllers:** 35 blueprints, 45 versions
+- **Controllers:** 35 blueprints, 46 versions
 - **Automations:** 4 blueprints, 4 versions
 - **Hooks:** 3 blueprints, 19 versions
 - **Breaking versions:** 12
@@ -135,7 +135,7 @@
 - **Title:** Controller - IKEA E1743 TRÅDFRI On/Off Switch & Dimmer
 - **Librarians:** yarafie, EPMatt
 - **Library Maintainers:** EPMatt, yarafie
-- **Latest Version:** 2025.10.12
+- **Latest Version:** 2026.04.12
 - **Tags:** zigbee, dimmer, light
 <details>
 <summary>Versions</summary>
@@ -143,6 +143,7 @@
 | Library | Release | Version    | Breaking |
 | ------- | ------- | ---------- | -------- |
 | EPMatt  | awesome | 2025.10.12 | no       |
+| EPMatt  | awesome | 2026.04.12 | no       |
 
 </details>
 
