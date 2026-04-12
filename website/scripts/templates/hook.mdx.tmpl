@@ -1,0 +1,54 @@
+---
+{{frontmatter}}
+---
+
+import {
+  BlueprintImportCard,
+  Inputs,
+  Requirement,
+  Changelog,
+  SupportedControllers,
+} from '/src/components/library_docs'
+
+<BlueprintImportCard
+  category='hooks'
+  id='{{id}}'
+  library='{{library}}'
+  release='{{release}}'
+/>
+
+<br />
+
+:::tip
+This blueprint is part of the **Controllers-Hooks Ecosystem**. You can read more about this topic [here](/docs/controllers-hooks-ecosystem).
+:::
+
+## Description
+
+{{description}}
+:::info
+An automation created with this blueprint must be linked to a [Controller](/docs/blueprints/controllers) automation. Controllers are blueprints which allow to easily integrate a wide range of controllers and use them to run a set of actions when interacting with them. They expose an abstract interface used by Hooks to create controller-based automations.
+
+See the list of [Controllers supported by this Hook](#supported-controllers) for additional details.
+:::
+
+## Requirements
+
+<Requirement id='controller' required/>
+
+## Inputs
+
+<Inputs category='hooks' id='{{id}}' library='{{library}}' release='{{release}}' />
+
+## Supported Controllers
+
+<SupportedControllers
+  category='hooks'
+  id='{{id}}'
+  library='{{library}}'
+  release='{{release}}'
+/>
+
+## Changelog
+
+<Changelog category='hooks' id='{{id}}' library='{{library}}' release='{{release}}' />

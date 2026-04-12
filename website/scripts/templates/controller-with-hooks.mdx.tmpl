@@ -1,0 +1,59 @@
+---
+{{frontmatter}}
+---
+
+import {
+  BlueprintImportCard,
+  Inputs,
+  Requirement,
+  Changelog,
+  SupportedHooks,
+} from '/src/components/library_docs'
+
+<BlueprintImportCard
+  category='controllers'
+  id='{{id}}'
+  library='{{library}}'
+  release='{{release}}'
+/>
+
+<br />
+
+:::tip
+This blueprint is part of the **Controllers-Hooks Ecosystem**. You can read more about this topic [here](/docs/controllers-hooks-ecosystem).
+:::
+
+## Description
+
+This blueprint provides universal support for running any custom action when a button is pressed on the provided {{model_name}}. Supports controllers integrated with {{integrations_csv}}.{{multi_integration_note}}
+
+:::tip
+Automations created with this blueprint can be connected with one or more [Hooks](/docs/blueprints/hooks) supported by this controller.
+Hooks allow to easily create controller-based automations for interacting with media players, lights, covers and more. See the list of [Hooks available for this controller](#available-hooks) for additional details.
+:::
+
+## Requirements
+
+{{requirements}}
+
+## Inputs
+
+<Inputs
+  category='controllers'
+  id='{{id}}'
+  library='{{library}}'
+  release='{{release}}'
+/>
+
+## Available Hooks
+
+{{hooks_sections}}
+
+## Changelog
+
+<Changelog
+  category='controllers'
+  id='{{id}}'
+  library='{{library}}'
+  release='{{release}}'
+/>

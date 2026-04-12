@@ -16,6 +16,33 @@ import { globSync } from 'glob'
 import YAML from 'yaml'
 
 const BLUEPRINTS_DIR = path.resolve(import.meta.dirname, '../docs/blueprints')
+const TEMPLATES_DIR = path.resolve(import.meta.dirname, 'templates')
+
+// ── Templates ───────────────────────────────────────────────────────────────
+
+const TEMPLATES = {
+  index: fs.readFileSync(path.join(TEMPLATES_DIR, 'index.mdx.tmpl'), 'utf-8'),
+  controllerNoHooks: fs.readFileSync(
+    path.join(TEMPLATES_DIR, 'controller-no-hooks.mdx.tmpl'),
+    'utf-8',
+  ),
+  controllerWithHooks: fs.readFileSync(
+    path.join(TEMPLATES_DIR, 'controller-with-hooks.mdx.tmpl'),
+    'utf-8',
+  ),
+  hook: fs.readFileSync(path.join(TEMPLATES_DIR, 'hook.mdx.tmpl'), 'utf-8'),
+  automation: fs.readFileSync(
+    path.join(TEMPLATES_DIR, 'automation.mdx.tmpl'),
+    'utf-8',
+  ),
+}
+
+/** Replace all {{key}} placeholders in a template string. */
+function renderTemplate(template, vars) {
+  return template.replace(/\{\{(\w+)\}\}/g, (match, key) =>
+    key in vars ? vars[key] : match,
+  )
+}
 
 // ── Requirement ID mapping ──────────────────────────────────────────────────
 
@@ -127,8 +154,14 @@ function generateBlueprintJson(manifest, category, blueprintId, blueprintDir) {
   return result
 }
 
+function buildFrontmatter(fields) {
+  return Object.entries(fields)
+    .map(([k, v]) => `${k}: ${v}`)
+    .join('\n')
+}
+
 function generateIndexMdx(manifest, category, blueprintId) {
-  const frontmatter = {
+  const fields = {
     blueprint_id: blueprintId,
     category,
     title: manifest.name,
@@ -136,29 +169,16 @@ function generateIndexMdx(manifest, category, blueprintId) {
   }
 
   if (category === 'controllers') {
-    frontmatter.manufacturer = manifest.manufacturer
-    frontmatter.model = manifest.model
-    frontmatter.model_name = manifest.model_name
+    fields.manufacturer = manifest.manufacturer
+    fields.model = manifest.model
+    fields.model_name = manifest.model_name
   }
 
-  const fm = Object.entries(frontmatter)
-    .map(([k, v]) => `${k}: ${v}`)
-    .join('\n')
-
-  return `---
-${fm}
----
-
-import { BlueprintPage } from '/src/components/library_docs'
-
-## Overview
-
-<BlueprintPage category='${category}' id='${blueprintId}' render='overview' />
-
-## Available Libraries
-
-<BlueprintPage category='${category}' id='${blueprintId}' render='libraries' />
-`
+  return renderTemplate(TEMPLATES.index, {
+    frontmatter: buildFrontmatter(fields),
+    category,
+    id: blueprintId,
+  })
 }
 
 function generateLibraryJson(
@@ -263,22 +283,47 @@ function generateVersionJson(
 
 // ── Version MDX generation ──────────────────────────────────────────────────
 
-function generateVersionMdxFrontmatter(manifest, category) {
-  const lines = []
-  lines.push(`title: ${manifest.name}`)
-  lines.push(`description: ${manifest.description}`)
-
-  if (category === 'controllers') {
-    lines.push(`manufacturer: ${manifest.manufacturer}`)
-    lines.push(`model: ${manifest.model}`)
-    lines.push(`model_name: ${manifest.model_name}`)
-    lines.push(`integrations: [${manifest.supported_integrations.join(', ')}]`)
+function buildVersionFrontmatter(manifest, category) {
+  const fields = {
+    title: manifest.name,
+    description: manifest.description,
   }
 
-  return `---\n${lines.join('\n')}\n---`
+  if (category === 'controllers') {
+    fields.manufacturer = manifest.manufacturer
+    fields.model = manifest.model
+    fields.model_name = manifest.model_name
+    fields.integrations = `[${manifest.supported_integrations.join(', ')}]`
+  }
+
+  return buildFrontmatter(fields)
 }
 
-function generateDefaultVersionMdxBody(
+function buildRequirements(integrations) {
+  return integrations
+    .map((integ) => {
+      const reqId = INTEGRATION_TO_REQUIREMENT_ID[integ.toLowerCase()]
+      return reqId ? `<Requirement id='${reqId}'/>` : null
+    })
+    .filter(Boolean)
+    .join('\n')
+}
+
+function buildHooksSections(hooksData, id, library, release) {
+  if (!hooksData) return ''
+  return hooksData.hooks
+    .map((h) => {
+      const desc = HOOK_DESCRIPTIONS[h.hook] || ''
+      return `### ${h.label}
+
+${desc}
+
+<SupportedHooks category='controllers' id='${id}' library='${library}' release='${release}' hook='${h.hook}'/>`
+    })
+    .join('\n\n')
+}
+
+function generateDefaultVersionMdx(
   manifest,
   category,
   blueprintId,
@@ -287,243 +332,42 @@ function generateDefaultVersionMdxBody(
   hooksData,
   releaseConfig,
 ) {
-  if (category === 'controllers') {
-    return generateControllerVersionMdx(
-      manifest,
-      blueprintId,
-      libraryId,
-      releaseId,
-      hooksData,
-      releaseConfig,
-    )
-  }
-  if (category === 'hooks') {
-    return generateHookVersionMdx(manifest, blueprintId, libraryId, releaseId)
-  }
-  return generateAutomationVersionMdx(
-    manifest,
-    blueprintId,
-    libraryId,
-    releaseId,
-  )
-}
-
-function generateControllerVersionMdx(
-  manifest,
-  id,
-  library,
-  release,
-  hooksData,
-  releaseConfig,
-) {
   const hooks = releaseConfig.supported_hooks
   const hasHooks = hooks && hooks.length > 0 && hooks[0] !== 'none'
 
-  const integrationsCsv = manifest.supported_integrations.join(', ')
-
-  // Determine imports
-  const imports = ['BlueprintImportCard', 'Inputs', 'Requirement', 'Changelog']
-  if (hasHooks) imports.push('SupportedHooks')
-
-  // Determine ecosystem tip
-  const ecosystemName = hasHooks
-    ? 'Controllers-Hooks Ecosystem'
-    : `Controllers ${library} Ecosystem`
-  const ecosystemLink = hasHooks
-    ? ` You can read more about this topic [here](/docs/controllers-hooks-ecosystem).`
-    : ''
-
-  // Build requirements
-  const requirements = manifest.supported_integrations
-    .map((integ) => {
-      const reqId = INTEGRATION_TO_REQUIREMENT_ID[integ.toLowerCase()]
-      return reqId ? `<Requirement id='${reqId}'/>` : null
-    })
-    .filter(Boolean)
-    .join('\n')
-
-  // Build description
-  let description = `This blueprint provides universal support for running any custom action when a button is pressed on the provided ${manifest.model_name}. Supports controllers integrated with ${integrationsCsv}.`
-
-  if (hasHooks && manifest.supported_integrations.length > 1) {
-    description +=
-      ' Just specify the integration used to connect the remote to Home Assistant when setting up the automation, and the blueprint will take care of all the rest.'
+  const vars = {
+    frontmatter: buildVersionFrontmatter(manifest, category),
+    id: blueprintId,
+    library: libraryId,
+    release: releaseId,
+    description: manifest.description,
+    model_name: manifest.model_name || '',
+    integrations_csv: (manifest.supported_integrations || []).join(', '),
+    multi_integration_note:
+      hasHooks && (manifest.supported_integrations || []).length > 1
+        ? ' Just specify the integration used to connect the remote to Home Assistant when setting up the automation, and the blueprint will take care of all the rest.'
+        : '',
+    requirements: buildRequirements(manifest.supported_integrations || []),
+    hooks_sections: buildHooksSections(
+      hooksData,
+      blueprintId,
+      libraryId,
+      releaseId,
+    ),
   }
 
-  // Build hooks tip
-  let hooksTip = ''
-  if (hasHooks) {
-    hooksTip = `
-:::tip
-Automations created with this blueprint can be connected with one or more [Hooks](/docs/blueprints/hooks) supported by this controller.
-Hooks allow to easily create controller-based automations for interacting with media players, lights, covers and more. See the list of [Hooks available for this controller](#available-hooks) for additional details.
-:::`
-  } else {
-    hooksTip = `
-:::tip
-Automations created with this blueprint is not connected to any [Hooks](/docs/blueprints/hooks).
-:::`
+  if (category === 'controllers') {
+    const template = hasHooks
+      ? TEMPLATES.controllerWithHooks
+      : TEMPLATES.controllerNoHooks
+    return renderTemplate(template, vars)
   }
 
-  // Build Available Hooks section
-  let hooksSection = ''
-  if (hasHooks && hooksData) {
-    const hookEntries = hooksData.hooks
-      .map((h) => {
-        const desc = HOOK_DESCRIPTIONS[h.hook] || ''
-        return `### ${h.label}
-
-${desc}
-
-<SupportedHooks category='controllers' id='${id}' library='${library}' release='${release}' hook='${h.hook}'/>`
-      })
-      .join('\n\n')
-
-    hooksSection = `## Available Hooks
-
-${hookEntries}`
-  } else {
-    hooksSection = `## Available Hooks
-
-There are no available hooks for this device.`
+  if (category === 'hooks') {
+    return renderTemplate(TEMPLATES.hook, vars)
   }
 
-  return `
-import {
-  ${imports.join(',\n  ')},
-} from '/src/components/library_docs'
-
-<BlueprintImportCard
-  category='controllers'
-  id='${id}'
-  library='${library}'
-  release='${release}'
-/>
-
-<br />
-
-:::tip
-This blueprint is part of the **${ecosystemName}**.${ecosystemLink}
-:::
-
-## Description
-
-${description}
-${hooksTip}
-
-## Requirements
-
-${requirements}
-
-## Inputs
-
-<Inputs
-  category='controllers'
-  id='${id}'
-  library='${library}'
-  release='${release}'
-/>
-
-${hooksSection}
-
-## Changelog
-
-<Changelog
-  category='controllers'
-  id='${id}'
-  library='${library}'
-  release='${release}'
-/>
-`
-}
-
-function generateHookVersionMdx(manifest, id, library, release) {
-  return `
-import {
-  BlueprintImportCard,
-  Inputs,
-  Requirement,
-  Changelog,
-  SupportedControllers,
-} from '/src/components/library_docs'
-
-<BlueprintImportCard
-  category='hooks'
-  id='${id}'
-  library='${library}'
-  release='${release}'
-/>
-
-<br />
-
-:::tip
-This blueprint is part of the **Controllers-Hooks Ecosystem**. You can read more about this topic [here](/docs/controllers-hooks-ecosystem).
-:::
-
-## Description
-
-${manifest.description}
-:::info
-An automation created with this blueprint must be linked to a [Controller](/docs/blueprints/controllers) automation. Controllers are blueprints which allow to easily integrate a wide range of controllers and use them to run a set of actions when interacting with them. They expose an abstract interface used by Hooks to create controller-based automations.
-
-See the list of [Controllers supported by this Hook](#supported-controllers) for additional details.
-:::
-
-## Requirements
-
-<Requirement id='controller' required/>
-
-## Inputs
-
-<Inputs category='hooks' id='${id}' library='${library}' release='${release}' />
-
-## Supported Controllers
-
-<SupportedControllers
-  category='hooks'
-  id='${id}'
-  library='${library}'
-  release='${release}'
-/>
-
-## Changelog
-
-<Changelog category='hooks' id='${id}' library='${library}' release='${release}' />
-`
-}
-
-function generateAutomationVersionMdx(manifest, id, library, release) {
-  return `
-import {
-  BlueprintImportCard,
-  Inputs,
-  Requirement,
-  Changelog,
-} from '/src/components/library_docs'
-
-<BlueprintImportCard
-  category='automations'
-  id='${id}'
-  library='${library}'
-  release='${release}'
-/>
-
-<br />
-
-## Description
-
-${manifest.description}
-
-## Requirements
-
-## Inputs
-
-<Inputs category='automations' id='${id}' library='${library}' release='${release}' />
-
-## Changelog
-
-<Changelog category='automations' id='${id}' library='${library}' release='${release}' />
-`
+  return renderTemplate(TEMPLATES.automation, vars)
 }
 
 // ── Main generator ──────────────────────────────────────────────────────────
@@ -596,18 +440,15 @@ function processBlueprint(manifestPath) {
       // Check for docs.mdx override
       const docsOverridePath = path.join(releaseDir, 'docs.mdx')
       const hasDocsOverride = fs.existsSync(docsOverridePath)
-      let docsOverrideBody = null
+
+      // Build version MDX content (shared across all versions of this release)
+      let versionMdxContent = null
       if (hasDocsOverride) {
-        docsOverrideBody = fs.readFileSync(docsOverridePath, 'utf-8')
-      }
-
-      // Generate frontmatter (shared across all versions)
-      const frontmatter = generateVersionMdxFrontmatter(manifest, category)
-
-      // Generate default body (shared across all versions)
-      let defaultBody = null
-      if (!hasDocsOverride) {
-        defaultBody = generateDefaultVersionMdxBody(
+        const docsBody = fs.readFileSync(docsOverridePath, 'utf-8')
+        const frontmatter = buildVersionFrontmatter(manifest, category)
+        versionMdxContent = `---\n${frontmatter}\n---\n${docsBody}`
+      } else {
+        versionMdxContent = generateDefaultVersionMdx(
           manifest,
           category,
           blueprintId,
@@ -633,9 +474,7 @@ function processBlueprint(manifestPath) {
         writeJson(path.join(versionDir, 'version.json'), versionJson)
 
         // Generate <version>.mdx
-        const body = docsOverrideBody || defaultBody
-        const versionMdx = `${frontmatter}\n${body}`
-        writeText(path.join(versionDir, `${version}.mdx`), versionMdx)
+        writeText(path.join(versionDir, `${version}.mdx`), versionMdxContent)
       }
     }
   }
