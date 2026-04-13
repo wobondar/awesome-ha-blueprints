@@ -1,28 +1,28 @@
 # Blueprint Metadata
 blueprint:
-  name: Controller - IKEA E2201 RODRET Dimmer
+  name: Controller - IKEA E1743 TRÅDFRI On/Off Switch & Dimmer
   description: |
-    # Controller - IKEA E2201 RODRET Dimmer
+    # Controller - IKEA E1743 TRÅDFRI On/Off Switch & Dimmer
 
-    ℹ️ Version 2026.02.17
+    ℹ️ Version 2026.04.12
 
-    Controller automation for executing any kind of action triggered by the provided IKEA E2201 RODRET Dimmer.
+    Controller automation for executing any kind of action triggered by the provided IKEA E1743 TRÅDFRI On/Off Switch & Dimmer..
     Allows to optionally loop an action on a button long press.
     Allows for Virtual Double Presses. Needs to be enabled in blueprint.
     Supports Zigbee2MQTT, ZHA, deCONZ.
 
     Automations created with this blueprint can be connected with one or more [Hooks](https://yarafie.github.io/awesome-ha-blueprints/docs/blueprints/hooks) supported by this controller.
     Hooks allow to easily create controller-based automations for interacting with lights, covers, media players, and potentially more.
-    See the list of [Hooks available for this controller](https://yarafie.github.io/awesome-ha-blueprints/docs/blueprints/controllers/ikea_e2201/EPMatt/awesome/2026.02.17#available-hooks) for additional details.
+    See the list of [Hooks available for this controller](https://yarafie.github.io/awesome-ha-blueprints/docs/blueprints/controllers/ikea_e1743/EPMatt/awesome/2026.04.12#available-hooks) for additional details.
 
     ## More Info
 
-    📝 [Changelog](https://yarafie.github.io/awesome-ha-blueprints/docs/blueprints/controllers/ikea_e2201/EPMatt/awesome/2026.02.17#changelog)
-    📕 Full documentation regarding this blueprint is available [here](https://yarafie.github.io/awesome-ha-blueprints/docs/blueprints/controllers/ikea_e2201).
+    📝 [Changelog](https://yarafie.github.io/awesome-ha-blueprints/docs/blueprints/controllers/ikea_e1743/EPMatt/awesome/2026.04.12#changelog)
+    📕 Full documentation regarding this blueprint is available [here](https://yarafie.github.io/awesome-ha-blueprints/docs/blueprints/controllers/ikea_e1743).
 
     🚀 This blueprint is part of the **[Awesome HA Blueprints](https://yarafie.github.io/awesome-ha-blueprints) project**. Please consider **[leaving a star on GitHub](https://github.com/yarafie/awesome-ha-blueprints)**! 🌟
 
-  source_url: https://github.com/yarafie/awesome-ha-blueprints/blob/main/blueprints/controllers/ikea_e2201/EPMatt/awesome/2026.02.17/ikea_e2201.yaml
+  source_url: https://github.com/yarafie/awesome-ha-blueprints/blob/main/blueprints/controllers/ikea_e1743//EPMatt/awesome/2026.04.12/ikea_e1743.yaml
   domain: automation
   homeassistant:
     min_version: 2024.10.0
@@ -33,31 +33,26 @@ blueprint:
       description: The controller device to use for the automation. Choose a value only if the remote is integrated with Zigbee2MQTT, ZHA, deCONZ.
       default: ''
       selector:
-        # source: https://zigbee.blakadder.com/Ikea_E2201.html
+        # source: https://zigbee.blakadder.com/Ikea_E1743.html
         device:
           filter:
-            # source: https://www.zigbee2mqtt.io/devices/E2201.html#ikea-e2201
+            # source: https://www.zigbee2mqtt.io/devices/E1743.html#ikea-e1743
             - integration: mqtt
               manufacturer: IKEA
-              model: RODRET wireless dimmer/power switch
+              model: TRADFRI on/off switch
             # For backwards compatibility with z2m 1.x. model_id is added to end of model rather than a seperate attribute in z2m 2.x
             - integration: mqtt
               manufacturer: IKEA
-              model: RODRET wireless dimmer/power switch (E2201)
+              model: TRADFRI on/off switch (E1743)
             # source: https://github.com/zigpy/zha-device-handlers/blob/dev/zhaquirks/ikea/twobtnremote.py#L206
             - integration: zha
               manufacturer: IKEA of Sweden
-              model: RODRET Dimmer
-            - integration: zha
-              manufacturer: IKEA of Sweden
-              model: RODRET wireless dimmer
+              model: TRADFRI on/off switch
+            # source: https://github.com/dresden-elektronik/deconz-rest-plugin/wiki/Supported-Devices
             # source: https://github.com/dresden-elektronik/deconz-rest-plugin/blob/8ae69a976bca13f22e8002a13ebe798d1e26c086/button_maps.json#L236
             - integration: deconz
               manufacturer: IKEA of Sweden
-              model: RODRET Dimmer
-            - integration: deconz
-              manufacturer: IKEA of Sweden
-              model: RODRET wireless dimmer
+              model: TRADFRI on/off switch
           multiple: false
     # inputs for custom actions
     action_button_up_short:
@@ -199,7 +194,7 @@ variables:
   # mapping between actions and integrations
   actions_mapping:
     z2m:
-      # source: https://www.zigbee2mqtt.io/devices/E2201.html#ikea-e2201
+      # source: https://www.zigbee2mqtt.io/devices/E1743.html#ikea-e1743
       button_up_short: ['on']
       button_up_long: [brightness_move_up]
       button_up_release: [brightness_stop]
@@ -209,11 +204,17 @@ variables:
     zha:
       # source: https://github.com/zigpy/zha-device-handlers/blob/dev/zhaquirks/ikea/twobtnremote.py#L206
       button_up_short: ['on']
-      button_up_long: [move_with_on_off]
-      button_up_release: [stop_with_on_off]
+      button_up_long:
+        [
+          move_with_on_off,
+          move_with_on_off_MoveMode.Up_83,
+          move_with_on_off_0_83,
+        ]
+      button_up_release: [stop_with_on_off, stop]
       button_down_short: ['off']
-      button_down_long: [move]
-      button_down_release: [stop_with_on_off]
+      button_down_long:
+        [move, move_MoveMode.Down_83_bitmap8.0_bitmap8.0, move_1_83]
+      button_down_release: [stop, stop_with_on_off]
     dcz:
       # source: https://github.com/dresden-elektronik/deconz-rest-plugin/blob/8ae69a976bca13f22e8002a13ebe798d1e26c086/button_maps.json#L236
       button_up_short: ['1002']
@@ -322,7 +323,7 @@ triggers:
     event_type: zha_event
     event_data:
       device_id: !input controller_device
-      command: stop_with_on_off
+      command: stop
       endpoint_id: 1
       cluster_id: 8
   # triggers for deCONZ
@@ -579,11 +580,20 @@ actions:
                             - conditions: []
                               sequence:
                                 - wait_for_trigger:
+                                    # Z2M
                                     - trigger: device
                                       domain: mqtt
                                       device_id: !input controller_device
                                       type: action
                                       subtype: brightness_stop
+                                    # ZHA Listen for either stop or stop_with_on_off events
+                                    - trigger: event
+                                      event_type: zha_event
+                                      event_data:
+                                        device_id: !input controller_device
+                                        command: stop
+                                        cluster_id: 8
+                                        endpoint_id: 1
                                     - trigger: event
                                       event_type: zha_event
                                       event_data:
@@ -591,6 +601,7 @@ actions:
                                         command: stop_with_on_off
                                         cluster_id: 8
                                         endpoint_id: 1
+                                    # DCZ
                                     - trigger: event
                                       event_type: deconz_event
                                       event_data:
@@ -643,11 +654,20 @@ actions:
                             - conditions: []
                               sequence:
                                 - wait_for_trigger:
+                                    # Z2M
                                     - trigger: device
                                       domain: mqtt
                                       device_id: !input controller_device
                                       type: action
                                       subtype: brightness_stop
+                                    # ZHA Listen for either stop or stop_with_on_off events
+                                    - trigger: event
+                                      event_type: zha_event
+                                      event_data:
+                                        device_id: !input controller_device
+                                        command: stop
+                                        cluster_id: 8
+                                        endpoint_id: 1
                                     - trigger: event
                                       event_type: zha_event
                                       event_data:
@@ -655,6 +675,7 @@ actions:
                                         command: stop_with_on_off
                                         cluster_id: 8
                                         endpoint_id: 1
+                                    # DCZ
                                     - trigger: event
                                       event_type: deconz_event
                                       event_data:
@@ -680,7 +701,7 @@ actions:
                                     # Stop the repeat loop
                                     - stop: button_down_released
       #
-      # Actions for Up Button long press released
+      # Actions for Up Button long press released (This should never be reached, captured in the long presses)
       - conditions:
           - condition: trigger
             id:
@@ -698,7 +719,7 @@ actions:
               - conditions: []
                 sequence: !input action_button_up_release
       #
-      # Actions for Down Button long press released
+      # Actions for Down Button long press released (This should never be reached, captured in the long presses)
       - conditions:
           - condition: trigger
             id:
