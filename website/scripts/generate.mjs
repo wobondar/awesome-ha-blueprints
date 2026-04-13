@@ -521,10 +521,7 @@ function generateDefaultVersionMdx(
       manifest.has_virtual_double_press && hasHooks
         ? STANDARD_VDP_HOOKS_NOTE + '\n\n'
         : '',
-    additional_notes_section: buildAdditionalNotesSection(
-      manifest,
-      releaseDir,
-    ),
+    additional_notes_section: buildAdditionalNotesSection(manifest, releaseDir),
   }
 
   if (category === 'controllers') {
