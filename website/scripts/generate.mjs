@@ -50,7 +50,14 @@ const INTEGRATION_TO_REQUIREMENT_ID = {
   zigbee2mqtt: 'zigbee2mqtt',
   zha: 'zha',
   deconz: 'deconz',
+  shelly: 'shelly',
 }
+
+/** Canonical order for integrations in generated text/frontmatter. */
+const CANONICAL_INTEGRATION_ORDER = ['Zigbee2MQTT', 'ZHA', 'deCONZ', 'Shelly']
+
+/** Canonical order for hook sections (matches original docs convention). */
+const CANONICAL_HOOK_ORDER = ['light', 'media_player', 'cover']
 
 // ── Standard hook descriptions ──────────────────────────────────────────────
 
@@ -61,6 +68,118 @@ const HOOK_DESCRIPTIONS = {
     'This Hook blueprint allows to build a controller-based automation to control a media player. Supports volume setting, play/pause and track selection.',
   cover:
     'This Hook blueprint allows to build a controller-based automation to control a cover. Supports opening, closing and tilting the cover.',
+}
+
+// ── Standard text blocks for flag-driven content ──────────────────────────
+
+const STANDARD_LONG_PRESS_PARAGRAPH =
+  'In addition of being able to provide custom actions for every kind of button press supported by the remote, the blueprint allows to loop the long press actions while the corresponding button is being held. Once released, the loop stops. This is useful when holding down a button should result in a continuous action (such as lowering the volume of a media player, or controlling a light brightness).'
+
+const STANDARD_VDP_DESCRIPTION_PARAGRAPH =
+  'The blueprint also adds support for virtual double button press events, which are not exposed by the controller itself.'
+
+const STANDARD_VDP_HOOKS_NOTE = `:::note Virtual double press actions
+Some of the following mappings might include actions for virtual double press events, which are disabled by default.
+If you are using a hook mapping which provides an action for a virtual double press event, please make sure to enable support for virtual double press on the corresponding buttons with the corresponding blueprint input.
+:::`
+
+const STANDARD_INPUT_TEXT_REQUIREMENT = `<Requirement name='Input Text Integration' required>
+
+This integration provides the entity which must be provided to the blueprint in the **Helper - Last Controller Event** input. Learn more about this helper by reading the dedicated section in the [Additional Notes](#helper---last-controller-event).
+
+[Input Text Integration Docs](https://www.home-assistant.io/integrations/input_text/)
+
+</Requirement>`
+
+const STANDARD_HELPER_PARAGRAPH =
+  "The `helper_last_controller_event` (Helper - Last Controller Event) input serves as a permanent storage area for the automation. The stored info is used to implement the blueprint's core functionality. To learn more about the helper, how it's used and why it's required, you can read the dedicated section in the [Controllers-Hooks Ecosystem documentation](/docs/controllers-hooks-ecosystem#helper---last-controller-event-input).\n\nThe helper is used to store the last controller event, allowing the blueprint to distinguish between different controller actions that the integration alone may not differentiate."
+
+const STANDARD_VDP_ADDITIONAL_NOTE =
+  "It's also important to note that the controller doesn't natively support double press events. Instead , this blueprint provides virtual double press events. You can read more about them in the [general Controllers-Hooks Ecosystem documentation](/docs/controllers-hooks-ecosystem#virtual-events)."
+
+// ── Integration helpers ────────────────────────────────────────────────────
+
+/** Filter out 'input_text' and sort in canonical order. */
+function getActualIntegrations(integrations) {
+  const actual = (integrations || []).filter(
+    (i) => i.toLowerCase() !== 'input_text',
+  )
+  return actual.sort((a, b) => {
+    const aIdx = CANONICAL_INTEGRATION_ORDER.indexOf(a)
+    const bIdx = CANONICAL_INTEGRATION_ORDER.indexOf(b)
+    if (aIdx === -1 && bIdx === -1) return 0
+    if (aIdx === -1) return 1
+    if (bIdx === -1) return -1
+    return aIdx - bIdx
+  })
+}
+
+/** Check if 'input_text' is in the integrations list. */
+function hasInputText(integrations) {
+  return (integrations || []).some((i) => i.toLowerCase() === 'input_text')
+}
+
+// ── Notes.md parsing ───────────────────────────────────────────────────────
+
+/** Parse a notes.md file into sections by ### headers. */
+function parseNoteSections(content) {
+  if (!content) return []
+  const sections = []
+  let current = null
+  for (const line of content.split('\n')) {
+    if (line.startsWith('### ')) {
+      if (current) sections.push(current)
+      current = { title: line.slice(4).trim(), content: '' }
+    } else if (current) {
+      current.content += line + '\n'
+    }
+  }
+  if (current) sections.push(current)
+  for (const s of sections) {
+    s.content = s.content.trim()
+  }
+  return sections
+}
+
+/** Build the complete Additional Notes section from manifest flags + notes.md. */
+function buildAdditionalNotesSection(manifest, releaseDir) {
+  const integrations = manifest.supported_integrations || []
+  const hasIT = hasInputText(integrations)
+  const hasVDP = manifest.has_virtual_double_press || false
+
+  const notesPath = path.join(releaseDir, 'notes.md')
+  let notesContent = ''
+  if (fs.existsSync(notesPath)) {
+    notesContent = fs.readFileSync(notesPath, 'utf-8').trim()
+  }
+
+  const noteSections = parseNoteSections(notesContent)
+
+  if (!hasIT && !hasVDP && noteSections.length === 0) return ''
+
+  let section = '## Additional Notes\n\n'
+
+  // Helper subsection (from input_text flag)
+  if (hasIT) {
+    section += '### Helper - Last Controller Event\n\n'
+    section += STANDARD_HELPER_PARAGRAPH + '\n\n'
+  }
+
+  // Virtual double press subsection (from flag)
+  if (hasVDP) {
+    section += '### Virtual double press events\n\n'
+    section += STANDARD_VDP_ADDITIONAL_NOTE + '\n\n'
+  }
+
+  // Remaining sections from notes.md
+  const remaining = noteSections.filter(
+    (s) => s.title !== 'Virtual double press events',
+  )
+  for (const s of remaining) {
+    section += `### ${s.title}\n\n${s.content}\n\n`
+  }
+
+  return section
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -156,7 +275,13 @@ function generateBlueprintJson(manifest, category, blueprintId, blueprintDir) {
 
 function buildFrontmatter(fields) {
   return Object.entries(fields)
-    .map(([k, v]) => `${k}: ${v}`)
+    .map(([k, v]) => {
+      // Quote values that YAML would parse as numbers to preserve string type
+      if (typeof v === 'string' && /^\d+$/.test(v)) {
+        return `${k}: '${v}'`
+      }
+      return `${k}: ${v}`
+    })
     .join('\n')
 }
 
@@ -215,7 +340,9 @@ function generateLibraryJson(
   }
 
   if (manifest.supported_integrations) {
-    result.supported_integrations = manifest.supported_integrations
+    result.supported_integrations = getActualIntegrations(
+      manifest.supported_integrations,
+    )
   }
 
   return result
@@ -248,7 +375,9 @@ function generateReleaseJson(
 
   if (category === 'controllers' && releaseConfig.supported_hooks) {
     result.supported_hooks = releaseConfig.supported_hooks
-    result.supported_integrations = releaseConfig.supported_integrations
+    result.supported_integrations = getActualIntegrations(
+      releaseConfig.supported_integrations,
+    )
   }
 
   if (category === 'hooks' && releaseConfig.supported_controllers) {
@@ -293,7 +422,10 @@ function buildVersionFrontmatter(manifest, category) {
     fields.manufacturer = manifest.manufacturer
     fields.model = manifest.model
     fields.model_name = manifest.model_name
-    fields.integrations = `[${manifest.supported_integrations.join(', ')}]`
+    const actualIntegrations = getActualIntegrations(
+      manifest.supported_integrations,
+    )
+    fields.integrations = `[${actualIntegrations.join(', ')}]`
   }
 
   return buildFrontmatter(fields)
@@ -311,14 +443,29 @@ function buildRequirements(integrations) {
 
 function buildHooksSections(hooksData, id, library, release) {
   if (!hooksData) return ''
-  return hooksData.hooks
+  // Sort hooks in canonical order (light, media_player, cover)
+  const sorted = [...hooksData.hooks].sort((a, b) => {
+    const aIdx = CANONICAL_HOOK_ORDER.indexOf(a.hook)
+    const bIdx = CANONICAL_HOOK_ORDER.indexOf(b.hook)
+    if (aIdx === -1 && bIdx === -1) return 0
+    if (aIdx === -1) return 1
+    if (bIdx === -1) return -1
+    return aIdx - bIdx
+  })
+  return sorted
     .map((h) => {
       const desc = HOOK_DESCRIPTIONS[h.hook] || ''
       return `### ${h.label}
 
 ${desc}
 
-<SupportedHooks category='controllers' id='${id}' library='${library}' release='${release}' hook='${h.hook}'/>`
+<SupportedHooks
+  category='controllers'
+  id='${id}'
+  library='${library}'
+  release='${release}'
+  hook='${h.hook}'
+/>`
     })
     .join('\n\n')
 }
@@ -331,9 +478,21 @@ function generateDefaultVersionMdx(
   releaseId,
   hooksData,
   releaseConfig,
+  releaseDir,
 ) {
   const hooks = releaseConfig.supported_hooks
   const hasHooks = hooks && hooks.length > 0 && hooks[0] !== 'none'
+  const integrations = manifest.supported_integrations || []
+  const actualIntegrations = getActualIntegrations(integrations)
+
+  // Build flag-driven description extra paragraphs
+  let descriptionExtra = ''
+  if (manifest.has_long_press_loop) {
+    descriptionExtra += '\n' + STANDARD_LONG_PRESS_PARAGRAPH + '\n'
+  }
+  if (manifest.has_virtual_double_press) {
+    descriptionExtra += '\n' + STANDARD_VDP_DESCRIPTION_PARAGRAPH + '\n'
+  }
 
   const vars = {
     frontmatter: buildVersionFrontmatter(manifest, category),
@@ -342,17 +501,29 @@ function generateDefaultVersionMdx(
     release: releaseId,
     description: manifest.description,
     model_name: manifest.model_name || '',
-    integrations_csv: (manifest.supported_integrations || []).join(', '),
+    integrations_csv: actualIntegrations.join(', '),
     multi_integration_note:
-      hasHooks && (manifest.supported_integrations || []).length > 1
+      hasHooks && actualIntegrations.length > 1
         ? ' Just specify the integration used to connect the remote to Home Assistant when setting up the automation, and the blueprint will take care of all the rest.'
         : '',
-    requirements: buildRequirements(manifest.supported_integrations || []),
+    requirements: buildRequirements(actualIntegrations),
     hooks_sections: buildHooksSections(
       hooksData,
       blueprintId,
       libraryId,
       releaseId,
+    ),
+    description_extra: descriptionExtra,
+    input_text_requirement: hasInputText(integrations)
+      ? '\n' + STANDARD_INPUT_TEXT_REQUIREMENT
+      : '',
+    virtual_double_press_note:
+      manifest.has_virtual_double_press && hasHooks
+        ? STANDARD_VDP_HOOKS_NOTE + '\n\n'
+        : '',
+    additional_notes_section: buildAdditionalNotesSection(
+      manifest,
+      releaseDir,
     ),
   }
 
@@ -456,6 +627,7 @@ function processBlueprint(manifestPath) {
           releaseId,
           hooksData,
           releaseConfig,
+          releaseDir,
         )
       }
 

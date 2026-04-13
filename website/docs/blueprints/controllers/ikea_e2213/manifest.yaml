@@ -32,3 +32,4 @@ external_references:
     url: 'https://github.com/zigpy/zha-device-handlers/blob/dev/zhaquirks/ikea/somrigsmartbtn.py#L149'
   - label: 'deCONZ Device'
     url: 'https://github.com/dresden-elektronik/deconz-rest-plugin/blob/8ae69a976bca13f22e8002a13ebe798d1e26c086/button_maps.json#L343'
+has_long_press_loop: true

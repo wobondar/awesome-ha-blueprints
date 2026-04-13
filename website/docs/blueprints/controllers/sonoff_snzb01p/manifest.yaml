@@ -17,6 +17,7 @@ supported_integrations:
   - 'ZHA'
   - 'Zigbee2MQTT'
   - 'deCONZ'
+  - 'input_text'
 supported_hooks:
   - 'cover'
   - 'light'

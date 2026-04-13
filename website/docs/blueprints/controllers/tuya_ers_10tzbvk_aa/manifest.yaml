@@ -36,3 +36,5 @@ external_references:
     url: 'https://de.aliexpress.com/item/1005007575864175.html'
   - label: 'Immax'
     url: 'https://www.immax.eu/immax-neo-smart-rotary-knob-change-cct-dimming-scene-zigbee-tuya-p17656/'
+has_long_press_loop: true
+has_virtual_double_press: true

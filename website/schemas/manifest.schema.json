@@ -121,6 +121,49 @@
       "enum": ["active", "testing", "development", "retired", "deprecated"],
       "default": "active",
       "description": "Lifecycle status. Defaults to 'active'."
+    },
+
+    "has_long_press_loop": {
+      "type": "boolean",
+      "description": "Whether the controller supports looping long press actions while a button is held."
+    },
+
+    "has_virtual_double_press": {
+      "type": "boolean",
+      "description": "Whether the controller provides virtual double press events not natively supported by the device."
+    },
+
+    "releases": {
+      "type": "object",
+      "description": "Per-release configuration overrides, keyed by release ID.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "supported_hooks": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "supported_integrations": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "supported_controllers": {
+            "type": "object",
+            "required": ["controllers", "count"],
+            "properties": {
+              "controllers": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
     }
   },
 

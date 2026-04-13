@@ -30,3 +30,5 @@ external_references:
     url: 'https://www.zigbee2mqtt.io/devices/929002398602.html#philips-929002398602'
   - label: 'ZHA Quirk'
     url: 'https://github.com/zigpy/zha-device-handlers/blob/dev/zhaquirks/'
+has_long_press_loop: true
+has_virtual_double_press: true

@@ -26,3 +26,4 @@ tags:
 external_references:
   - label: 'External'
     url: 'https://www.home-assistant.io/integrations/shelly'
+has_long_press_loop: true

@@ -26,7 +26,7 @@ This blueprint is part of the **Controllers-Hooks Ecosystem**. You can read more
 ## Description
 
 This blueprint provides universal support for running any custom action when a button is pressed on the provided {{model_name}}. Supports controllers integrated with {{integrations_csv}}.{{multi_integration_note}}
-
+{{description_extra}}
 :::tip
 Automations created with this blueprint can be connected with one or more [Hooks](/docs/blueprints/hooks) supported by this controller.
 Hooks allow to easily create controller-based automations for interacting with media players, lights, covers and more. See the list of [Hooks available for this controller](#available-hooks) for additional details.
@@ -34,7 +34,7 @@ Hooks allow to easily create controller-based automations for interacting with m
 
 ## Requirements
 
-{{requirements}}
+{{requirements}}{{input_text_requirement}}
 
 ## Inputs
 
@@ -47,9 +47,9 @@ Hooks allow to easily create controller-based automations for interacting with m
 
 ## Available Hooks
 
-{{hooks_sections}}
+{{virtual_double_press_note}}{{hooks_sections}}
 
-## Changelog
+{{additional_notes_section}}## Changelog
 
 <Changelog
   category='controllers'

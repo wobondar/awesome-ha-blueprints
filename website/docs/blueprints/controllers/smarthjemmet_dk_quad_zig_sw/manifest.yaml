@@ -25,3 +25,4 @@ tags:
 external_references:
   - label: 'Zigbee2MQTT'
     url: 'https://www.zigbee2mqtt.io/devices/QUAD-ZIG-SW.html'
+has_long_press_loop: true

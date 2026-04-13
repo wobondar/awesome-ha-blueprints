@@ -32,3 +32,4 @@ external_references:
     url: 'https://github.com/zigpy/zha-device-handlers/blob/dev/zhaquirks/ikea/shortcutbtn.py'
   - label: 'deCONZ Device'
     url: 'https://github.com/dresden-elektronik/deconz-rest-plugin/wiki/Supported-Devices'
+has_long_press_loop: true

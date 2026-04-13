@@ -17,6 +17,7 @@ supported_integrations:
   - 'ZHA'
   - 'Zigbee2MQTT'
   - 'deCONZ'
+  - 'input_text'
 supported_hooks:
   - 'cover'
   - 'light'
@@ -31,3 +32,4 @@ external_references:
     url: 'https://www.zigbee2mqtt.io/devices/WXCJKG11LM.html#aqara-wxcjkg11lm'
   - label: 'deCONZ Device'
     url: 'https://github.com/dresden-elektronik/deconz-rest-plugin/wiki/Supported-Devices'
+has_long_press_loop: true

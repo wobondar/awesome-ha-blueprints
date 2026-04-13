@@ -28,3 +28,4 @@ external_references:
     url: 'https://zigbee.blakadder.com/Aqara_WXKG13LM.html'
   - label: 'Zigbee2MQTT'
     url: 'https://www.zigbee2mqtt.io/devices/WXKG13LM.html'
+has_long_press_loop: true

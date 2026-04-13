@@ -28,3 +28,5 @@ external_references:
     url: 'https://www.zigbee2mqtt.io/devices/ZG-101Z_D.html'
   - label: 'Zigbee2MQTT'
     url: 'https://www.zigbee2mqtt.io/devices/ZG-101Z_D_1.html'
+has_long_press_loop: true
+has_virtual_double_press: true

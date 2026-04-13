@@ -17,6 +17,7 @@ supported_integrations:
   - 'ZHA'
   - 'Zigbee2MQTT'
   - 'deCONZ'
+  - 'input_text'
 supported_hooks:
   - 'cover'
   - 'light'
@@ -35,3 +36,5 @@ external_references:
     url: 'https://github.com/zigpy/zha-device-handlers/blob/dev/zhaquirks/ikea/fourbtnremote.py'
   - label: 'deCONZ Device'
     url: 'https://github.com/dresden-elektronik/deconz-rest-plugin/blob/master/devices/ikea/styrbar_remote_control.json'
+has_long_press_loop: true
+has_virtual_double_press: true
