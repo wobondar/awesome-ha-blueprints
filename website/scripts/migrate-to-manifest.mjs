@@ -12,7 +12,7 @@
 
 import fs from 'node:fs'
 import path from 'node:path'
-import { globSync } from 'glob'
+import process from 'node:process'
 import YAML from 'yaml'
 
 const BLUEPRINTS_DIR = path.resolve(import.meta.dirname, '../docs/blueprints')
@@ -39,7 +39,7 @@ function isVersionDir(name) {
 
 // ── Extract manifest from existing files ────────────────────────────────────
 
-function extractManifest(blueprintDir, category, blueprintId) {
+function extractManifest(blueprintDir, category) {
   const blueprintJson = readJson(path.join(blueprintDir, 'blueprint.json'))
 
   // Find the first library to get maintainer and integration info
@@ -160,7 +160,7 @@ function migrateBlueprint(blueprintDir, category, blueprintId) {
   console.log(`  ${category}/${blueprintId}`)
 
   // 1. Extract manifest
-  const manifest = extractManifest(blueprintDir, category, blueprintId)
+  const manifest = extractManifest(blueprintDir, category)
 
   // 2. Write manifest.yaml
   const manifestPath = path.join(blueprintDir, 'manifest.yaml')

@@ -442,7 +442,7 @@ function processBlueprint(manifestPath) {
       const hasDocsOverride = fs.existsSync(docsOverridePath)
 
       // Build version MDX content (shared across all versions of this release)
-      let versionMdxContent = null
+      let versionMdxContent
       if (hasDocsOverride) {
         const docsBody = fs.readFileSync(docsOverridePath, 'utf-8')
         const frontmatter = buildVersionFrontmatter(manifest, category)
