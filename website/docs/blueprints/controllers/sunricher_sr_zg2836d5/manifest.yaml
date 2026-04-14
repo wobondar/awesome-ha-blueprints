@@ -1,0 +1,35 @@
+name: 'Controller - Sunricher SR-ZG2836D5 Zigbee Smart Remote'
+description: 'Controller automation for executing any kind of action triggered by the provided Sunricher SR-ZG2836D5 Zigbee Smart Remote.'
+manufacturer: Sunricher
+model: SR-ZG2836D5
+model_name: 'Sunricher SR-ZG2836D5 Zigbee Smart Remote'
+
+librarians:
+  - id: yarafie
+    name: yarafie
+  - id: wobondar
+    name: wobondar
+
+maintainers:
+  - id: wobondar
+    name: wobondar
+
+supported_integrations:
+  - Zigbee2MQTT
+
+releases:
+  awesome:
+    supported_hooks: [light, cover]
+  anything:
+    supported_hooks: [none]
+
+tags:
+  - zigbee
+  - remote
+  - rotary
+
+external_references:
+  - label: Zigbee2MQTT
+    url: https://www.zigbee2mqtt.io/devices/SR-ZG2836D5.html
+  - label: Sunricher
+    url: https://www.sunricher.com/zigbee-smart-remote-control-sr-zg2836d5.html

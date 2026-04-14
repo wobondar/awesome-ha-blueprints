@@ -1,0 +1,1065 @@
+# ==========================================================
+# Sunricher SR-ZG2836D5 Zigbee Smart Remote
+# ==========================================================
+#
+# Physical layout:
+#   - Center button (on/off in color mode, open/close/stop cycle in cover mode)
+#   - Rotary ring around center button
+#   - 4 scene buttons (top-left=1, top-right=2, bottom-left=3, bottom-right=4)
+#
+# Modes (no Z2M action on mode entry):
+#   Color Mode: center + scene 1 button
+#     Sub-modes (center double press cycles through, LED blinks indicate):
+#       1x blink -> Brightness:  rotary sends brightness_step_up/down
+#       2x blink -> Color Temp:  rotary sends color_temperature_step_up/down
+#       3x blink -> Color Hue:   rotary sends color_hue_step_up/down
+#                                 (move_to_saturation fires on entry)
+#   Cover Mode: center + scene 2 button
+#     Center button short press cycles: open -> close -> stop
+#     Rotary right: open, then stop
+#     Rotary left:  close, then stop
+#
+# Payload data for rotary step events (color modes only):
+#   action_step_size:     varies by rotation speed (faster = larger)
+#   action_transition_time: 0.02 (constant)
+#
+# Continuous mode (optional):
+#   When enabled for a color mode, the blueprint loops the action
+#   repeatedly while rotation continues, ignoring Z2M action_step_size
+#   and using a configured step size instead. The loop breaks when
+#   no more step events arrive within the configured delay.
+#
+# Z2M Action -> Event mapping
+#  ---------------------------------------------------------------------------
+# | Context                     | Z2M Action                  | Event         |
+# |---------------------------------------------------------------------------|
+# | Center (color mode)         | on                          | button_on     |
+# | Center (color mode)         | off                         | button_off    |
+# | Rotary (brightness mode)    | brightness_step_up          | brightness_step_up |
+# | Rotary (brightness mode)    | brightness_step_down        | brightness_step_down |
+# | Rotary (color temp mode)    | color_temperature_step_up   | color_temp_step_up |
+# | Rotary (color temp mode)    | color_temperature_step_down | color_temp_step_down |
+# | Rotary (hue mode)           | color_hue_step_up           | color_hue_step_up |
+# | Rotary (hue mode)           | color_hue_step_down         | color_hue_step_down |
+# | Hue mode entry indicator    | move_to_saturation          | move_to_saturation |
+# | Center/rotary (cover mode)  | open                        | cover_open    |
+# | Center/rotary (cover mode)  | close                       | cover_close   |
+# | Center/rotary (cover mode)  | stop                        | cover_stop    |
+# | Scene 1 short press         | recall_1                    | scene_1_recall|
+# | Scene 2 short press         | recall_2                    | scene_2_recall|
+# | Scene 3 short press         | recall_3                    | scene_3_recall|
+# | Scene 4 short press         | recall_4                    | scene_4_recall|
+# | Scene 1 hold                | store_1                     | scene_1_store |
+# | Scene 2 hold                | store_2                     | scene_2_store |
+# | Scene 3 hold                | store_3                     | scene_3_store |
+# | Scene 4 hold                | store_4                     | scene_4_store |
+#  ---------------------------------------------------------------------------
+# ==========================================================
+# Blueprint Metadata
+blueprint:
+  name: Controller - Sunricher SR-ZG2836D5 Zigbee Smart Remote
+  description: |
+    # Controller - Sunricher SR-ZG2836D5 Zigbee Smart Remote
+
+    Version 2026.04.12
+
+    Controller automation for executing any kind of action triggered by the provided Sunricher SR-ZG2836D5 Zigbee Smart Remote.
+    Supports Zigbee2MQTT.
+
+    This is a multi-function rotary remote with two operating modes:
+
+    **Color Mode** (enter: center + scene 1 button):
+    Center button toggles on/off. Rotary controls brightness by default.
+    Double press center button to cycle sub-modes: brightness (1x LED blink) -> color temperature (2x) -> color hue (3x) -> brightness.
+
+    **Cover Mode** (enter: center + scene 2 button):
+    Center button short press cycles through open/close/stop.
+    Rotary right sends open then stop, rotary left sends close then stop.
+
+    Additionally, 4 scene buttons support short press (recall) and hold (store).
+
+    Optionally, continuous mode can be enabled per color sub-mode to loop the action while rotation continues.
+
+    **Known limitations (mode: single):**
+    - Fast rotation without continuous mode may drop events if your custom action takes longer than the interval between rotary clicks.
+    - Direction reversal mid-rotation may lose the first reversed step while the current loop finishes.
+    - While a continuous loop is active, all other controller events (scene buttons, on/off, mode switches) are silently dropped until the loop ends.
+    - Cover mode rotary sends open/close then stop in rapid succession -- the stop event may be dropped. Use center button for reliable stop.
+    - Keep custom actions fast (simple service calls) when using continuous mode, as slow actions may be interrupted by the loop timeout.
+    - Do not combine continuous mode in this controller with continuous hook mapping options -- pick one approach.
+
+    Automations created with this blueprint can be connected with one or more [Hooks](https://yarafie.github.io/awesome-ha-blueprints/docs/blueprints/hooks) supported by this controller.
+    Hooks allow to easily create controller-based automations for interacting with lights, covers, media players, and potentially more.
+    See the list of [Hooks available for this controller](https://yarafie.github.io/awesome-ha-blueprints/docs/blueprints/controllers/sunricher_sr_zg2836d5/wobondar/awesome/2026.04.12#available-hooks) for additional details.
+
+    ## More Info
+
+    [Changelog](https://yarafie.github.io/awesome-ha-blueprints/docs/blueprints/controllers/sunricher_sr_zg2836d5/wobondar/awesome/2026.04.12#changelog)
+    Full documentation regarding this blueprint is available [here](https://yarafie.github.io/awesome-ha-blueprints/docs/blueprints/controllers/sunricher_sr_zg2836d5).
+
+    This blueprint is part of the **[Awesome HA Blueprints](https://yarafie.github.io/awesome-ha-blueprints) project**. Please consider **[leaving a star on GitHub](https://github.com/yarafie/awesome-ha-blueprints)**!
+
+  source_url: https://github.com/yarafie/awesome-ha-blueprints/blob/main/blueprints/controllers/sunricher_sr_zg2836d5/wobondar/awesome/2026.04.12/sunricher_sr_zg2836d5.yaml
+  domain: automation
+  homeassistant:
+    min_version: 2024.10.0
+  # Device Selector
+  input:
+    controller_device:
+      name: (Zigbee2MQTT Required) Controller Device
+      description: The controller device to use for the automation. Choose a value only if the remote is integrated with Zigbee2MQTT.
+      default: ''
+      selector:
+        device:
+          filter:
+            # source: https://www.zigbee2mqtt.io/devices/SR-ZG2836D5.html
+            - integration: mqtt
+              manufacturer: Sunricher
+              model: Zigbee smart remote
+            # For backwards compatibility with z2m 1.x. model_id is added to end of model rather than a separate attribute in z2m 2.x
+            - integration: mqtt
+              manufacturer: Sunricher
+              model: Zigbee smart remote (SR-ZG2836D5)
+          multiple: false
+    # inputs for custom actions
+    # Center button - Color Mode
+    action_button_on:
+      name: (Optional) Center button - On (color mode)
+      description: Action to run when center button is pressed to turn on (color mode).
+      default: []
+      selector:
+        action:
+    action_button_off:
+      name: (Optional) Center button - Off (color mode)
+      description: Action to run when center button is pressed to turn off (color mode).
+      default: []
+      selector:
+        action:
+    # Rotary - Brightness sub-mode
+    action_brightness_step_up:
+      name: (Optional) Rotary up (brightness mode)
+      description: Action to run on rotary step up in brightness sub-mode. Variables action_step_size and action_transition_time are available from Z2M payload.
+      default: []
+      selector:
+        action:
+    action_brightness_step_down:
+      name: (Optional) Rotary down (brightness mode)
+      description: Action to run on rotary step down in brightness sub-mode. Variables action_step_size and action_transition_time are available from Z2M payload.
+      default: []
+      selector:
+        action:
+    # Rotary - Color Temperature sub-mode
+    action_color_temp_step_up:
+      name: (Optional) Rotary up (color temperature mode)
+      description: Action to run on rotary step up in color temperature sub-mode. Variables action_step_size and action_transition_time are available from Z2M payload.
+      default: []
+      selector:
+        action:
+    action_color_temp_step_down:
+      name: (Optional) Rotary down (color temperature mode)
+      description: Action to run on rotary step down in color temperature sub-mode. Variables action_step_size and action_transition_time are available from Z2M payload.
+      default: []
+      selector:
+        action:
+    # Rotary - Color Hue sub-mode
+    action_color_hue_step_up:
+      name: (Optional) Rotary up (color hue mode)
+      description: Action to run on rotary step up in color hue sub-mode. Variables action_step_size and action_transition_time are available from Z2M payload.
+      default: []
+      selector:
+        action:
+    action_color_hue_step_down:
+      name: (Optional) Rotary down (color hue mode)
+      description: Action to run on rotary step down in color hue sub-mode. Variables action_step_size and action_transition_time are available from Z2M payload.
+      default: []
+      selector:
+        action:
+    # Hue mode entry indicator
+    action_move_to_saturation:
+      name: (Optional) Color hue mode entry indicator
+      description: Action to run when entering color hue sub-mode (move_to_saturation event fires on entry).
+      default: []
+      selector:
+        action:
+    # Cover Mode
+    action_cover_open:
+      name: (Optional) Cover open (cover mode)
+      description: Action to run on cover open (center button or rotary right in cover mode).
+      default: []
+      selector:
+        action:
+    action_cover_close:
+      name: (Optional) Cover close (cover mode)
+      description: Action to run on cover close (center button or rotary left in cover mode).
+      default: []
+      selector:
+        action:
+    action_cover_stop:
+      name: (Optional) Cover stop (cover mode)
+      description: Action to run on cover stop (center button or rotary release in cover mode).
+      default: []
+      selector:
+        action:
+    # Scene buttons (short press = recall, hold = store)
+    action_scene_1_recall:
+      name: (Optional) Scene 1 short press (recall)
+      description: Action to run on scene button 1 (top-left) short press.
+      default: []
+      selector:
+        action:
+    action_scene_2_recall:
+      name: (Optional) Scene 2 short press (recall)
+      description: Action to run on scene button 2 (top-right) short press.
+      default: []
+      selector:
+        action:
+    action_scene_3_recall:
+      name: (Optional) Scene 3 short press (recall)
+      description: Action to run on scene button 3 (bottom-left) short press.
+      default: []
+      selector:
+        action:
+    action_scene_4_recall:
+      name: (Optional) Scene 4 short press (recall)
+      description: Action to run on scene button 4 (bottom-right) short press.
+      default: []
+      selector:
+        action:
+    action_scene_1_store:
+      name: (Optional) Scene 1 hold (store)
+      description: Action to run on scene button 1 (top-left) hold.
+      default: []
+      selector:
+        action:
+    action_scene_2_store:
+      name: (Optional) Scene 2 hold (store)
+      description: Action to run on scene button 2 (top-right) hold.
+      default: []
+      selector:
+        action:
+    action_scene_3_store:
+      name: (Optional) Scene 3 hold (store)
+      description: Action to run on scene button 3 (bottom-left) hold.
+      default: []
+      selector:
+        action:
+    action_scene_4_store:
+      name: (Optional) Scene 4 hold (store)
+      description: Action to run on scene button 4 (bottom-right) hold.
+      default: []
+      selector:
+        action:
+    # Continuous mode options
+    rotary_options_section:
+      name: Rotary & Continuous Mode options
+      icon: mdi:rotate-right
+      collapsed: true
+      input:
+        # Brightness
+        brightness_loop:
+          name: (Optional) Brightness - Enable continuous mode
+          description: >-
+            When enabled, the brightness action loops continuously while rotating,
+            ignoring Z2M action_step_size. Uses the configured step size below.
+          default: false
+          selector:
+            boolean:
+        brightness_step_size:
+          name: (Optional) Brightness - Step size
+          description: Step size for brightness (1-255). Available as variable brightness_step_size in custom actions regardless of continuous mode setting.
+          default: 25
+          selector:
+            number:
+              min: 1
+              max: 255
+              step: 1
+              mode: slider
+        brightness_max_loop_repeats:
+          name: (Optional) Brightness - Maximum loop repeats
+          description: Safety limit to prevent endless loops in continuous mode.
+          default: 50
+          selector:
+            number:
+              min: 1
+              max: 1000
+              step: 1
+              mode: slider
+        # Color Temperature
+        color_temp_loop:
+          name: (Optional) Color Temperature - Enable continuous mode
+          description: >-
+            When enabled, the color temperature action loops continuously while rotating,
+            ignoring Z2M action_step_size. Uses the configured step size below.
+          default: false
+          selector:
+            boolean:
+        color_temp_step_size:
+          name: (Optional) Color Temperature - Step size
+          description: Step size for color temperature (1-255). Available as variable color_temp_step_size in custom actions regardless of continuous mode setting.
+          default: 25
+          selector:
+            number:
+              min: 1
+              max: 255
+              step: 1
+              mode: slider
+        color_temp_max_loop_repeats:
+          name: (Optional) Color Temperature - Maximum loop repeats
+          description: Safety limit to prevent endless loops in continuous mode.
+          default: 50
+          selector:
+            number:
+              min: 1
+              max: 1000
+              step: 1
+              mode: slider
+        # Color Hue
+        color_hue_loop:
+          name: (Optional) Color Hue - Enable continuous mode
+          description: >-
+            When enabled, the color hue action loops continuously while rotating,
+            ignoring Z2M action_step_size. Uses the configured step size below.
+          default: false
+          selector:
+            boolean:
+        color_hue_step_size:
+          name: (Optional) Color Hue - Step size
+          description: Step size for color hue (1-360). Available as variable color_hue_step_size in custom actions regardless of continuous mode setting.
+          default: 15
+          selector:
+            number:
+              min: 1
+              max: 360
+              step: 1
+              mode: slider
+        color_hue_max_loop_repeats:
+          name: (Optional) Color Hue - Maximum loop repeats
+          description: Safety limit to prevent endless loops in continuous mode.
+          default: 50
+          selector:
+            number:
+              min: 1
+              max: 1000
+              step: 1
+              mode: slider
+        # Cover
+        cover_step_size:
+          name: (Optional) Cover - Step size
+          description: Step size for cover position (1-100). Available as variable cover_step_size in custom actions. Cover mode does not receive action_step_size from Z2M, so configure this value and reference it in your custom action as {{ cover_step_size }}.
+          default: 10
+          selector:
+            number:
+              min: 1
+              max: 100
+              step: 1
+              mode: slider
+        # Shared
+        helper_long_press_delay:
+          name: (Optional) Helper - Continuous mode delay
+          description: >-
+            Max delay in milliseconds to wait for the next rotation step event
+            before stopping the continuous loop. Increase if the loop stops too early.
+          default: 250
+          selector:
+            number:
+              min: 100
+              max: 5000
+              unit_of_measurement: milliseconds
+              mode: box
+              step: 10
+#
+# Automation schema
+variables:
+  # Controller ID
+  controller_id: !input controller_device
+  # integration id used to select items in the action mapping
+  # integration type is set from trigger.id
+  integration_id: '{{ trigger.id.split("-")[0] }}'
+  # Continuous mode variables
+  brightness_loop: !input brightness_loop
+  brightness_step_size: !input brightness_step_size
+  brightness_max_loop_repeats: !input brightness_max_loop_repeats
+  color_temp_loop: !input color_temp_loop
+  color_temp_step_size: !input color_temp_step_size
+  color_temp_max_loop_repeats: !input color_temp_max_loop_repeats
+  color_hue_loop: !input color_hue_loop
+  color_hue_step_size: !input color_hue_step_size
+  color_hue_max_loop_repeats: !input color_hue_max_loop_repeats
+  cover_step_size: !input cover_step_size
+  helper_long_press_delay: !input helper_long_press_delay
+  # Z2M payload data (auto-extracted from trigger payload)
+  action_step_size: '{{ (trigger.payload | from_json).action_step_size | default(0) if "action_step_size" in (trigger.payload | default("")) else 0 }}'
+  action_transition_time: '{{ (trigger.payload | from_json).action_transition_time | default(0) if "action_transition_time" in (trigger.payload | default("")) else 0 }}'
+  # mapping between actions and integrations
+  actions_mapping:
+    z2m:
+      # source: https://www.zigbee2mqtt.io/devices/SR-ZG2836D5.html
+      button_on: ['on']
+      button_off: ['off']
+      brightness_step_up: [brightness_step_up]
+      brightness_step_down: [brightness_step_down]
+      color_temp_step_up: [color_temperature_step_up]
+      color_temp_step_down: [color_temperature_step_down]
+      color_hue_step_up: [color_hue_step_up]
+      color_hue_step_down: [color_hue_step_down]
+      move_to_saturation: [move_to_saturation]
+      cover_open: ['open']
+      cover_close: [close]
+      cover_stop: [stop]
+      scene_1_recall: [recall_1]
+      scene_2_recall: [recall_2]
+      scene_3_recall: [recall_3]
+      scene_4_recall: [recall_4]
+      scene_1_store: [store_1]
+      scene_2_store: [store_2]
+      scene_3_store: [store_3]
+      scene_4_store: [store_4]
+  # pre-choose actions for buttons based on configured integration
+  # mainly used to pass to hooks through ahb_controller_event
+  button_on: '{{ actions_mapping[integration_id]["button_on"] }}'
+  button_off: '{{ actions_mapping[integration_id]["button_off"] }}'
+  brightness_step_up: '{{ actions_mapping[integration_id]["brightness_step_up"] }}'
+  brightness_step_down: '{{ actions_mapping[integration_id]["brightness_step_down"] }}'
+  color_temp_step_up: '{{ actions_mapping[integration_id]["color_temp_step_up"] }}'
+  color_temp_step_down: '{{ actions_mapping[integration_id]["color_temp_step_down"] }}'
+  color_hue_step_up: '{{ actions_mapping[integration_id]["color_hue_step_up"] }}'
+  color_hue_step_down: '{{ actions_mapping[integration_id]["color_hue_step_down"] }}'
+  move_to_saturation: '{{ actions_mapping[integration_id]["move_to_saturation"] }}'
+  cover_open: '{{ actions_mapping[integration_id]["cover_open"] }}'
+  cover_close: '{{ actions_mapping[integration_id]["cover_close"] }}'
+  cover_stop: '{{ actions_mapping[integration_id]["cover_stop"] }}'
+  scene_1_recall: '{{ actions_mapping[integration_id]["scene_1_recall"] }}'
+  scene_2_recall: '{{ actions_mapping[integration_id]["scene_2_recall"] }}'
+  scene_3_recall: '{{ actions_mapping[integration_id]["scene_3_recall"] }}'
+  scene_4_recall: '{{ actions_mapping[integration_id]["scene_4_recall"] }}'
+  scene_1_store: '{{ actions_mapping[integration_id]["scene_1_store"] }}'
+  scene_2_store: '{{ actions_mapping[integration_id]["scene_2_store"] }}'
+  scene_3_store: '{{ actions_mapping[integration_id]["scene_3_store"] }}'
+  scene_4_store: '{{ actions_mapping[integration_id]["scene_4_store"] }}'
+#
+# Mode Block
+mode: single
+max_exceeded: silent
+#
+# Triggers Block
+triggers:
+  # triggers for zigbee2mqtt
+  # Center button - Color Mode
+  - trigger: device
+    id: z2m-button-on
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: 'on'
+  - trigger: device
+    id: z2m-button-off
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: 'off'
+  # Rotary - Brightness sub-mode
+  - trigger: device
+    id: z2m-brightness-step-up
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: brightness_step_up
+  - trigger: device
+    id: z2m-brightness-step-down
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: brightness_step_down
+  # Rotary - Color Temperature sub-mode
+  - trigger: device
+    id: z2m-color-temp-step-up
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: color_temperature_step_up
+  - trigger: device
+    id: z2m-color-temp-step-down
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: color_temperature_step_down
+  # Rotary - Color Hue sub-mode
+  - trigger: device
+    id: z2m-color-hue-step-up
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: color_hue_step_up
+  - trigger: device
+    id: z2m-color-hue-step-down
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: color_hue_step_down
+  # Hue mode entry indicator
+  - trigger: device
+    id: z2m-move-to-saturation
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: move_to_saturation
+  # Cover Mode
+  - trigger: device
+    id: z2m-cover-open
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: 'open'
+  - trigger: device
+    id: z2m-cover-close
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: close
+  - trigger: device
+    id: z2m-cover-stop
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: stop
+  # Scene buttons - short press (recall)
+  - trigger: device
+    id: z2m-scene-1-recall
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: recall_1
+  - trigger: device
+    id: z2m-scene-2-recall
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: recall_2
+  - trigger: device
+    id: z2m-scene-3-recall
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: recall_3
+  - trigger: device
+    id: z2m-scene-4-recall
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: recall_4
+  # Scene buttons - hold (store)
+  - trigger: device
+    id: z2m-scene-1-store
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: store_1
+  - trigger: device
+    id: z2m-scene-2-store
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: store_2
+  - trigger: device
+    id: z2m-scene-3-store
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: store_3
+  - trigger: device
+    id: z2m-scene-4-store
+    domain: mqtt
+    device_id: !input controller_device
+    type: action
+    subtype: store_4
+#
+# Conditions Block
+conditions:
+  - condition: and
+    conditions:
+      # check that the button event is not empty
+      - >-
+        {%- set trigger_action -%}
+        {%- if integration_id == "z2m" -%}
+        {{ trigger.payload }}
+        {%- endif -%}
+        {%- endset -%}
+        {{ trigger_action not in ["","None","unknown"] }}
+#
+# Actions Block
+actions:
+  #
+  # choose the sequence to run based on the received button event
+  - choose:
+      #
+      # Actions for Center button On (color mode)
+      - conditions:
+          - condition: trigger
+            id:
+              - z2m-button-on
+        sequence:
+          - event: ahb_controller_event
+            event_data:
+              controller: '{{ controller_id }}'
+              action: button_on
+          - choose:
+              - conditions: []
+                sequence: !input action_button_on
+      #
+      # Actions for Center button Off (color mode)
+      - conditions:
+          - condition: trigger
+            id:
+              - z2m-button-off
+        sequence:
+          - event: ahb_controller_event
+            event_data:
+              controller: '{{ controller_id }}'
+              action: button_off
+          - choose:
+              - conditions: []
+                sequence: !input action_button_off
+      #
+      # Actions for Rotary up (brightness mode)
+      - conditions:
+          - condition: trigger
+            id:
+              - z2m-brightness-step-up
+        sequence:
+          - choose:
+              - conditions: '{{ brightness_loop }}'
+                sequence:
+                  # fire the ahb event only once, the hook will take care of looping
+                  - event: ahb_controller_event
+                    event_data:
+                      controller: '{{ controller_id }}'
+                      action: brightness_step_up
+                  - repeat:
+                      count: !input brightness_max_loop_repeats
+                      sequence:
+                        - parallel:
+                            - sequence:
+                                - choose:
+                                    - conditions: []
+                                      sequence: !input action_brightness_step_up
+                            - sequence:
+                                - wait_for_trigger:
+                                    - trigger: device
+                                      domain: mqtt
+                                      device_id: !input controller_device
+                                      type: action
+                                      subtype: brightness_step_up
+                                  timeout:
+                                    milliseconds: !input helper_long_press_delay
+                                  continue_on_timeout: true
+                                - if:
+                                    - condition: template
+                                      value_template: '{{ wait.trigger.idx is not defined }}'
+                                  then:
+                                    - stop: brightness_step_up_stopped
+            default:
+              - event: ahb_controller_event
+                event_data:
+                  controller: '{{ controller_id }}'
+                  action: brightness_step_up
+              - choose:
+                  - conditions: []
+                    sequence: !input action_brightness_step_up
+      #
+      # Actions for Rotary down (brightness mode)
+      - conditions:
+          - condition: trigger
+            id:
+              - z2m-brightness-step-down
+        sequence:
+          - choose:
+              - conditions: '{{ brightness_loop }}'
+                sequence:
+                  # fire the ahb event only once, the hook will take care of looping
+                  - event: ahb_controller_event
+                    event_data:
+                      controller: '{{ controller_id }}'
+                      action: brightness_step_down
+                  - repeat:
+                      count: !input brightness_max_loop_repeats
+                      sequence:
+                        - parallel:
+                            - sequence:
+                                - choose:
+                                    - conditions: []
+                                      sequence: !input action_brightness_step_down
+                            - sequence:
+                                - wait_for_trigger:
+                                    - trigger: device
+                                      domain: mqtt
+                                      device_id: !input controller_device
+                                      type: action
+                                      subtype: brightness_step_down
+                                  timeout:
+                                    milliseconds: !input helper_long_press_delay
+                                  continue_on_timeout: true
+                                - if:
+                                    - condition: template
+                                      value_template: '{{ wait.trigger.idx is not defined }}'
+                                  then:
+                                    - stop: brightness_step_down_stopped
+            default:
+              - event: ahb_controller_event
+                event_data:
+                  controller: '{{ controller_id }}'
+                  action: brightness_step_down
+              - choose:
+                  - conditions: []
+                    sequence: !input action_brightness_step_down
+      #
+      # Actions for Rotary up (color temperature mode)
+      - conditions:
+          - condition: trigger
+            id:
+              - z2m-color-temp-step-up
+        sequence:
+          - choose:
+              - conditions: '{{ color_temp_loop }}'
+                sequence:
+                  # fire the ahb event only once, the hook will take care of looping
+                  - event: ahb_controller_event
+                    event_data:
+                      controller: '{{ controller_id }}'
+                      action: color_temp_step_up
+                  - repeat:
+                      count: !input color_temp_max_loop_repeats
+                      sequence:
+                        - parallel:
+                            - sequence:
+                                - choose:
+                                    - conditions: []
+                                      sequence: !input action_color_temp_step_up
+                            - sequence:
+                                - wait_for_trigger:
+                                    - trigger: device
+                                      domain: mqtt
+                                      device_id: !input controller_device
+                                      type: action
+                                      subtype: color_temperature_step_up
+                                  timeout:
+                                    milliseconds: !input helper_long_press_delay
+                                  continue_on_timeout: true
+                                - if:
+                                    - condition: template
+                                      value_template: '{{ wait.trigger.idx is not defined }}'
+                                  then:
+                                    - stop: color_temp_step_up_stopped
+            default:
+              - event: ahb_controller_event
+                event_data:
+                  controller: '{{ controller_id }}'
+                  action: color_temp_step_up
+              - choose:
+                  - conditions: []
+                    sequence: !input action_color_temp_step_up
+      #
+      # Actions for Rotary down (color temperature mode)
+      - conditions:
+          - condition: trigger
+            id:
+              - z2m-color-temp-step-down
+        sequence:
+          - choose:
+              - conditions: '{{ color_temp_loop }}'
+                sequence:
+                  # fire the ahb event only once, the hook will take care of looping
+                  - event: ahb_controller_event
+                    event_data:
+                      controller: '{{ controller_id }}'
+                      action: color_temp_step_down
+                  - repeat:
+                      count: !input color_temp_max_loop_repeats
+                      sequence:
+                        - parallel:
+                            - sequence:
+                                - choose:
+                                    - conditions: []
+                                      sequence: !input action_color_temp_step_down
+                            - sequence:
+                                - wait_for_trigger:
+                                    - trigger: device
+                                      domain: mqtt
+                                      device_id: !input controller_device
+                                      type: action
+                                      subtype: color_temperature_step_down
+                                  timeout:
+                                    milliseconds: !input helper_long_press_delay
+                                  continue_on_timeout: true
+                                - if:
+                                    - condition: template
+                                      value_template: '{{ wait.trigger.idx is not defined }}'
+                                  then:
+                                    - stop: color_temp_step_down_stopped
+            default:
+              - event: ahb_controller_event
+                event_data:
+                  controller: '{{ controller_id }}'
+                  action: color_temp_step_down
+              - choose:
+                  - conditions: []
+                    sequence: !input action_color_temp_step_down
+      #
+      # Actions for Rotary up (color hue mode)
+      - conditions:
+          - condition: trigger
+            id:
+              - z2m-color-hue-step-up
+        sequence:
+          - choose:
+              - conditions: '{{ color_hue_loop }}'
+                sequence:
+                  # fire the ahb event only once, the hook will take care of looping
+                  - event: ahb_controller_event
+                    event_data:
+                      controller: '{{ controller_id }}'
+                      action: color_hue_step_up
+                  - repeat:
+                      count: !input color_hue_max_loop_repeats
+                      sequence:
+                        - parallel:
+                            - sequence:
+                                - choose:
+                                    - conditions: []
+                                      sequence: !input action_color_hue_step_up
+                            - sequence:
+                                - wait_for_trigger:
+                                    - trigger: device
+                                      domain: mqtt
+                                      device_id: !input controller_device
+                                      type: action
+                                      subtype: color_hue_step_up
+                                  timeout:
+                                    milliseconds: !input helper_long_press_delay
+                                  continue_on_timeout: true
+                                - if:
+                                    - condition: template
+                                      value_template: '{{ wait.trigger.idx is not defined }}'
+                                  then:
+                                    - stop: color_hue_step_up_stopped
+            default:
+              - event: ahb_controller_event
+                event_data:
+                  controller: '{{ controller_id }}'
+                  action: color_hue_step_up
+              - choose:
+                  - conditions: []
+                    sequence: !input action_color_hue_step_up
+      #
+      # Actions for Rotary down (color hue mode)
+      - conditions:
+          - condition: trigger
+            id:
+              - z2m-color-hue-step-down
+        sequence:
+          - choose:
+              - conditions: '{{ color_hue_loop }}'
+                sequence:
+                  # fire the ahb event only once, the hook will take care of looping
+                  - event: ahb_controller_event
+                    event_data:
+                      controller: '{{ controller_id }}'
+                      action: color_hue_step_down
+                  - repeat:
+                      count: !input color_hue_max_loop_repeats
+                      sequence:
+                        - parallel:
+                            - sequence:
+                                - choose:
+                                    - conditions: []
+                                      sequence: !input action_color_hue_step_down
+                            - sequence:
+                                - wait_for_trigger:
+                                    - trigger: device
+                                      domain: mqtt
+                                      device_id: !input controller_device
+                                      type: action
+                                      subtype: color_hue_step_down
+                                  timeout:
+                                    milliseconds: !input helper_long_press_delay
+                                  continue_on_timeout: true
+                                - if:
+                                    - condition: template
+                                      value_template: '{{ wait.trigger.idx is not defined }}'
+                                  then:
+                                    - stop: color_hue_step_down_stopped
+            default:
+              - event: ahb_controller_event
+                event_data:
+                  controller: '{{ controller_id }}'
+                  action: color_hue_step_down
+              - choose:
+                  - conditions: []
+                    sequence: !input action_color_hue_step_down
+      #
+      # Actions for Color hue mode entry indicator
+      - conditions:
+          - condition: trigger
+            id:
+              - z2m-move-to-saturation
+        sequence:
+          - event: ahb_controller_event
+            event_data:
+              controller: '{{ controller_id }}'
+              action: move_to_saturation
+          - choose:
+              - conditions: []
+                sequence: !input action_move_to_saturation
+      #
+      # Actions for Cover open
+      - conditions:
+          - condition: trigger
+            id:
+              - z2m-cover-open
+        sequence:
+          - event: ahb_controller_event
+            event_data:
+              controller: '{{ controller_id }}'
+              action: cover_open
+          - choose:
+              - conditions: []
+                sequence: !input action_cover_open
+      #
+      # Actions for Cover close
+      - conditions:
+          - condition: trigger
+            id:
+              - z2m-cover-close
+        sequence:
+          - event: ahb_controller_event
+            event_data:
+              controller: '{{ controller_id }}'
+              action: cover_close
+          - choose:
+              - conditions: []
+                sequence: !input action_cover_close
+      #
+      # Actions for Cover stop
+      - conditions:
+          - condition: trigger
+            id:
+              - z2m-cover-stop
+        sequence:
+          - event: ahb_controller_event
+            event_data:
+              controller: '{{ controller_id }}'
+              action: cover_stop
+          - choose:
+              - conditions: []
+                sequence: !input action_cover_stop
+      #
+      # Actions for Scene 1 short press (recall)
+      - conditions:
+          - condition: trigger
+            id:
+              - z2m-scene-1-recall
+        sequence:
+          - event: ahb_controller_event
+            event_data:
+              controller: '{{ controller_id }}'
+              action: scene_1_recall
+          - choose:
+              - conditions: []
+                sequence: !input action_scene_1_recall
+      #
+      # Actions for Scene 2 short press (recall)
+      - conditions:
+          - condition: trigger
+            id:
+              - z2m-scene-2-recall
+        sequence:
+          - event: ahb_controller_event
+            event_data:
+              controller: '{{ controller_id }}'
+              action: scene_2_recall
+          - choose:
+              - conditions: []
+                sequence: !input action_scene_2_recall
+      #
+      # Actions for Scene 3 short press (recall)
+      - conditions:
+          - condition: trigger
+            id:
+              - z2m-scene-3-recall
+        sequence:
+          - event: ahb_controller_event
+            event_data:
+              controller: '{{ controller_id }}'
+              action: scene_3_recall
+          - choose:
+              - conditions: []
+                sequence: !input action_scene_3_recall
+      #
+      # Actions for Scene 4 short press (recall)
+      - conditions:
+          - condition: trigger
+            id:
+              - z2m-scene-4-recall
+        sequence:
+          - event: ahb_controller_event
+            event_data:
+              controller: '{{ controller_id }}'
+              action: scene_4_recall
+          - choose:
+              - conditions: []
+                sequence: !input action_scene_4_recall
+      #
+      # Actions for Scene 1 hold (store)
+      - conditions:
+          - condition: trigger
+            id:
+              - z2m-scene-1-store
+        sequence:
+          - event: ahb_controller_event
+            event_data:
+              controller: '{{ controller_id }}'
+              action: scene_1_store
+          - choose:
+              - conditions: []
+                sequence: !input action_scene_1_store
+      #
+      # Actions for Scene 2 hold (store)
+      - conditions:
+          - condition: trigger
+            id:
+              - z2m-scene-2-store
+        sequence:
+          - event: ahb_controller_event
+            event_data:
+              controller: '{{ controller_id }}'
+              action: scene_2_store
+          - choose:
+              - conditions: []
+                sequence: !input action_scene_2_store
+      #
+      # Actions for Scene 3 hold (store)
+      - conditions:
+          - condition: trigger
+            id:
+              - z2m-scene-3-store
+        sequence:
+          - event: ahb_controller_event
+            event_data:
+              controller: '{{ controller_id }}'
+              action: scene_3_store
+          - choose:
+              - conditions: []
+                sequence: !input action_scene_3_store
+      #
+      # Actions for Scene 4 hold (store)
+      - conditions:
+          - condition: trigger
+            id:
+              - z2m-scene-4-store
+        sequence:
+          - event: ahb_controller_event
+            event_data:
+              controller: '{{ controller_id }}'
+              action: scene_4_store
+          - choose:
+              - conditions: []
+                sequence: !input action_scene_4_store

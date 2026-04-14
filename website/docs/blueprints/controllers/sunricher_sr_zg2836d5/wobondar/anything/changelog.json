@@ -1,0 +1,12 @@
+[
+  {
+    "date": "2026.04.12",
+    "changes": [
+      {
+        "author": "@wobondar",
+        "description": "First blueprint version. ([@wobondar](https://github.com/wobondar))",
+        "breaking": false
+      }
+    ]
+  }
+]
