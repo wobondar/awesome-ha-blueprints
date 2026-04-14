@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import Ajv2020 from 'ajv/dist/2020.js'
 import matter from 'gray-matter'
+import yaml from 'js-yaml'
 
 /* =========================================================
    Setup (JSON Schema draft 2020-12)
@@ -49,6 +50,10 @@ const JSON_SCHEMAS = {
   'hooks.json': 'hooks.mappings.schema.json',
 }
 
+const YAML_SCHEMAS = {
+  'manifest.yaml': 'manifest.schema.json',
+}
+
 const MDX_SCHEMAS = {
   index: 'index.mdx.schema.json',
   version: 'version.mdx.schema.json',
@@ -73,9 +78,11 @@ function loadSchema(schemaFile) {
   compiled[schemaFile] = schema
 }
 
-;[...Object.values(JSON_SCHEMAS), ...Object.values(MDX_SCHEMAS)].forEach(
-  loadSchema,
-)
+;[
+  ...Object.values(JSON_SCHEMAS),
+  ...Object.values(YAML_SCHEMAS),
+  ...Object.values(MDX_SCHEMAS),
+].forEach(loadSchema)
 
 /* =========================================================
    Read changed files (already filtered upstream)
@@ -119,6 +126,25 @@ for (const file of changedFiles) {
       console.error(ajv.errors)
     } else {
       console.log(`✔     Schema OK: ${file}`)
+    }
+    continue
+  }
+
+  /* ---------------- YAML (manifest) ---------------- */
+  if (file.endsWith('.yaml') && base === 'manifest.yaml') {
+    const schemaFile = YAML_SCHEMAS[base]
+    if (schemaFile) {
+      const yamlData = yaml.load(fs.readFileSync(file, 'utf8'))
+      const schema = compiled[schemaFile]
+
+      const valid = ajv.validate(schema.$id, yamlData)
+      if (!valid) {
+        hasErrors = true
+        console.error(`❌     Schema errors in ${file}`)
+        console.error(ajv.errors)
+      } else {
+        console.log(`✔     Schema OK: ${file}`)
+      }
     }
     continue
   }

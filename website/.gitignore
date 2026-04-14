@@ -8,6 +8,21 @@
 .docusaurus
 .cache-loader
 
+# Generated blueprint files (source of truth is manifest.yaml)
+# These are produced by `node scripts/generate.mjs` at build time.
+docs/blueprints/**/blueprint.json
+docs/blueprints/**/index.mdx
+docs/blueprints/**/library.json
+docs/blueprints/**/release.json
+docs/blueprints/**/version.json
+# All MDX under blueprints except docs.mdx (the contributor override)
+docs/blueprints/**/*.mdx
+!docs/blueprints/**/docs.mdx
+# Keep category-level MDX pages (controllers.mdx, hooks.mdx, automations.mdx)
+!docs/blueprints/controllers.mdx
+!docs/blueprints/hooks.mdx
+!docs/blueprints/automations.mdx
+
 # Misc
 .DS_Store
 .env

@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yarafie.github.io/awesome-ha-blueprints/schemas/manifest.schema.json",
+  "title": "Awesome HA Library – Blueprint Manifest Schema",
+  "description": "Single source of truth for blueprint metadata. All other JSON/MDX files are generated from this manifest at build time.",
+  "type": "object",
+  "required": ["name", "description", "librarians", "maintainers"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable blueprint name (e.g. 'Controller - Tuya TS0046 Wireless switch with 6 buttons')."
+    },
+
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Blueprint description for listings and metadata."
+    },
+
+    "manufacturer": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Device manufacturer (required for controllers)."
+    },
+
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Device model identifier (required for controllers)."
+    },
+
+    "model_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable device model name (required for controllers)."
+    },
+
+    "librarians": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Curators responsible for defining this blueprint.",
+      "items": {
+        "type": "object",
+        "required": ["id", "name"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "url": { "type": "string", "format": "uri" }
+        }
+      }
+    },
+
+    "maintainers": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Library maintainers for this blueprint.",
+      "items": {
+        "type": "object",
+        "required": ["id", "name"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "url": { "type": "string", "format": "uri" }
+        }
+      }
+    },
+
+    "supported_integrations": {
+      "type": "array",
+      "description": "Integrations supported by this blueprint (e.g. Zigbee2MQTT, ZHA, deCONZ).",
+      "items": { "type": "string" }
+    },
+
+    "supported_hooks": {
+      "type": "array",
+      "description": "Hook types supported by this controller (e.g. ['light', 'cover', 'media_player'] or ['none']).",
+      "items": { "type": "string" }
+    },
+
+    "supported_controllers": {
+      "type": "object",
+      "description": "Controllers supported by this hook.",
+      "required": ["controllers", "count"],
+      "properties": {
+        "controllers": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+
+    "tags": {
+      "type": "array",
+      "description": "Searchable tags.",
+      "items": { "type": "string" }
+    },
+
+    "external_references": {
+      "type": "array",
+      "description": "External reference links.",
+      "items": {
+        "type": "object",
+        "required": ["label", "url"],
+        "additionalProperties": false,
+        "properties": {
+          "label": { "type": "string", "minLength": 1 },
+          "url": { "type": "string", "format": "uri" }
+        }
+      }
+    },
+
+    "status": {
+      "type": "string",
+      "enum": ["active", "testing", "development", "retired", "deprecated"],
+      "default": "active",
+      "description": "Lifecycle status. Defaults to 'active'."
+    },
+
+    "has_long_press_loop": {
+      "type": "boolean",
+      "description": "Whether the controller supports looping long press actions while a button is held."
+    },
+
+    "has_virtual_double_press": {
+      "type": "boolean",
+      "description": "Whether the controller provides virtual double press events not natively supported by the device."
+    },
+
+    "releases": {
+      "type": "object",
+      "description": "Per-release configuration overrides, keyed by release ID.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "supported_hooks": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "supported_integrations": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "supported_controllers": {
+            "type": "object",
+            "required": ["controllers", "count"],
+            "properties": {
+              "controllers": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "additionalProperties": false
+}

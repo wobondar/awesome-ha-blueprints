@@ -1,0 +1,40 @@
+name: 'Controller - IKEA E2001/E2002 STYRBAR Remote control'
+description: 'Controller automation for executing any kind of action triggered by the provided IKEA E2001/E2002 STYRBAR Remote control.'
+manufacturer: 'IKEA'
+model: 'E2001/E2002'
+model_name: 'IKEA E2001/E2002 STYRBAR Remote control'
+librarians:
+  - id: 'yarafie'
+    name: 'yarafie'
+  - id: 'EPMatt'
+    name: 'EPMatt'
+maintainers:
+  - id: 'yarafie'
+    name: 'yarafie'
+  - id: 'EPMatt'
+    name: 'EPMatt'
+supported_integrations:
+  - 'ZHA'
+  - 'Zigbee2MQTT'
+  - 'deCONZ'
+  - 'input_text'
+supported_hooks:
+  - 'cover'
+  - 'light'
+  - 'media_player'
+tags:
+  - 'zigbee'
+  - 'button'
+  - 'remote'
+  - '4-button'
+external_references:
+  - label: 'Blakadder'
+    url: 'https://zigbee.blakadder.com/Ikea_E2002.html'
+  - label: 'Zigbee2MQTT'
+    url: 'https://www.zigbee2mqtt.io/devices/E2001_E2002.html#ikea-e2001-e2002'
+  - label: 'ZHA Quirk'
+    url: 'https://github.com/zigpy/zha-device-handlers/blob/dev/zhaquirks/ikea/fourbtnremote.py'
+  - label: 'deCONZ Device'
+    url: 'https://github.com/dresden-elektronik/deconz-rest-plugin/blob/master/devices/ikea/styrbar_remote_control.json'
+has_long_press_loop: true
+has_virtual_double_press: true
